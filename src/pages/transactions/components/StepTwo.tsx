@@ -36,7 +36,7 @@ const StepTwo = ({
               <span className="font-semibold text-2xl">{cart.length} Total Items</span>
             </p>
             <p className="font-semibold text-lg text-monday-gray">
-              Kelola Stok Terdistribusi
+              Kelola Produk Penjualan
             </p>
           </div>
 
@@ -44,7 +44,7 @@ const StepTwo = ({
             onClick={handleOpenModal}
             className="btn btn-primary font-semibold"
           >
-            Distribusi Stok
+            Pilih Produk
             <img
               src="/assets/images/icons/add-square-white.svg"
               className="flex size-6 shrink-0"
@@ -55,7 +55,7 @@ const StepTwo = ({
         <hr className="border-monday-border" />
         <div id="Product-List" className="flex flex-col px-4 gap-5 flex-1">
           <div className="flex items-center justify-between">
-            <p className="font-semibold text-xl">Stok Terdistribusi</p>
+            <p className="font-semibold text-xl">Produk Penjualan</p>
           </div>
 
           {cart.length > 0 ? (

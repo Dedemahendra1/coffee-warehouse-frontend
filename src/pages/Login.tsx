@@ -28,7 +28,7 @@ const Login = () => {
       <div className="flex flex-col h-screen overflow-hidden rounded-tr-[32px] w-[685px] shrink-0 blue-gradient">
         <div className="px-[40px] pt-[46px]">
           <p className="font-semibold text-lg text-monday-lime-green-char">
-            — Coffee Warehouse Management
+            — Senopati Coffee &middot; Inventory & Distribution System
           </p>
 
           <p className="font-extrabold text-[42px] leading-tight uppercase text-white mt-4">

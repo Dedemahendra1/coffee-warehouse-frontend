@@ -10,6 +10,7 @@ import Unauthorized from "./pages/Unauthorized";
 
 import Overview from "./pages/Overview";
 import OverviewOutlet from "./pages/OverviewOutlet";
+import Reports from "./pages/Reports";
 
 import MyOutletProfile from "./pages/MyOutletProfile";
 
@@ -76,6 +77,7 @@ function App() {
           {/* Protected Routes for Manager */}
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/overview" element={<ProtectedRoute roles={['manager']}><Overview /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute roles={['manager']}><Reports /></ProtectedRoute>} />
           
           {/* Protected Routes for Keeper */}
           <Route path="/overview-outlet" element={<ProtectedRoute roles={['keeper']}><OverviewOutlet /></ProtectedRoute>} />

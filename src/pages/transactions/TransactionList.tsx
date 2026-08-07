@@ -194,7 +194,7 @@ const TransactionList = () => {
                           className="flex items-center justify-between"
                         >
                           <p className="font-semibold text-lg">
-                            Stok Terdistribusi ({tx.transaction_products.length})
+                            Produk Terjual ({tx.transaction_products.length})
                           </p>
                           <img
                             src="assets/images/icons/arrow-circle-up.svg"
@@ -229,7 +229,7 @@ const TransactionList = () => {
                                       <p className="font-semibold text-xl text-monday-blue">
                                         Rp {tp.price.toLocaleString("id")}
                                         <span className="text-monday-gray">
-                                          (2x)
+                                          ({tp.quantity}x)
                                         </span>
                                       </p>
                                     </div>

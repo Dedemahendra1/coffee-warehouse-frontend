@@ -64,6 +64,13 @@ const Sidebar = () => {
           roles: ["manager"],
         },
         {
+          label: "Reports",
+          path: "/reports",
+          iconBlack: "/assets/images/icons/document-text-grey.svg",
+          iconBlue: "/assets/images/icons/document-text-blue-fill.svg",
+          roles: ["manager"],
+        },
+        {
           label: "Outlets",
           path: "/outlets",
           iconBlack: "/assets/images/icons/shop-black.svg",
@@ -130,11 +137,12 @@ const Sidebar = () => {
   return (
     <aside className="relative flex h-auto w-[280px] shrink-0 bg-white">
       <div className="flex flex-col fixed top-0 w-[280px] shrink-0 h-screen pt-[30px] px-4 gap-[30px]">
-        <img
-          src="/assets/images/logos/logo.svg"
-          className="h-8 w-fit"
-          alt="logo"
-        />
+        <div className="flex flex-col pl-4" style={{ marginTop: 2 }}>
+          <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, margin: 0 }}>
+            <span className="text-monday-blue">Senopati</span><span style={{ color: '#111827' }}> Coffee</span>
+          </p>
+          <p className="font-medium text-monday-gray" style={{ fontSize: 12.5, marginTop: 4, lineHeight: 1.3 }}>Inventory & Distribution System</p>
+        </div>
         <div className="flex flex-col gap-5 overflow-y-scroll hide-scrollbar h-full overscroll-contain">
           {sidebarMenus.map((section) => {
             const visibleItems = section.items.filter((item) =>

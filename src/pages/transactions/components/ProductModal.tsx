@@ -20,42 +20,62 @@ const ProductModal = ({
   if (!isOpen) return null;
 
   const updateQuantity = (productId: number, delta: number) => {
-    setSelectedProducts((prev) => ({
-      ...prev,
-      [productId]: Math.max(1, (prev[productId] || 1) + delta),
-    }));
+    const stock =
+      outlet?.products.find((p) => p.id === productId)?.pivot?.stock ?? 0;
+
+    setSelectedProducts((prev) => {
+      const current = prev[productId] || 1;
+      const next = Math.max(1, current + delta);
+      return { ...prev, [productId]: stock > 0 ? Math.min(next, stock) : 1 };
+    });
   };
 
   const handleAddToCart = () => {
     const updatedCart = [...cart];
+    const insufficientStock: string[] = [];
 
     Object.entries(selectedProducts).forEach(([productId, quantity]) => {
-      const mp = outlet?.products.find((mp) => mp.id === Number(productId));
+      const product = outlet?.products.find(
+        (mp) => mp.id === Number(productId)
+      );
 
-      const product = mp;
+      if (!product) return;
 
-      if (product) {
-        const existing = updatedCart.find((item) => item.id === product.id);
+      const stock = product.pivot?.stock ?? 0;
+      const existing = updatedCart.find((item) => item.id === product.id);
+      const totalQuantity = (existing?.quantity ?? 0) + quantity;
 
-        const sub_total = product.price * quantity;
+      if (totalQuantity > stock) {
+        insufficientStock.push(
+          `${product.name}: tersedia ${stock}, diminta ${totalQuantity}`
+        );
+        return;
+      }
 
-        if (existing) {
-          existing.quantity += quantity;
-          existing.sub_total = existing.price * existing.quantity;
-        } else {
-          // updatedCart.push({ ...product, quantity, sub_total });
-          updatedCart.push({
-            id: product.id,
-            name: product.name,
-            category: product.category.name,
-            price: product.price,
-            thumbnail: product.thumbnail,
-            quantity,
-            sub_total,
-          });
-        }
+      if (existing) {
+        existing.quantity = totalQuantity;
+        existing.sub_total = existing.price * existing.quantity;
+      } else {
+        updatedCart.push({
+          id: product.id,
+          name: product.name,
+          category: product.category.name,
+          price: product.price,
+          thumbnail: product.thumbnail,
+          quantity,
+          sub_total: product.price * quantity,
+        });
       }
     });
+
+    if (insufficientStock.length > 0) {
+      alert(
+        `Stok outlet tidak mencukupi untuk produk berikut:\n- ${insufficientStock.join(
+          "\n- "
+        )}`
+      );
+      return;
+    }
 
     setCart(updatedCart);
     onClose();
@@ -72,7 +92,7 @@ const ProductModal = ({
       />
       <div className="relative flex flex-col flex-1 w-full max-w-[1200px] h-full max-h-[752px] shrink-0 rounded-3xl p-[18px] gap-5 bg-white">
         <div className="modal-header flex items-center justify-between">
-          <p className="font-semibold text-xl">Distribusi Stok</p>
+          <p className="font-semibold text-xl">Pilih Produk Penjualan</p>
           <button
             data-close-modal=""
             className="flex size-14 rounded-full items-center justify-center bg-monday-gray-background"

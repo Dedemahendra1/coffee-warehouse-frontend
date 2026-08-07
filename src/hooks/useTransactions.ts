@@ -45,7 +45,13 @@ export const useCreateTransaction = () => {
     },
     onError: (error) => {
       console.error("Transaction Error:", error);
-      alert(error.response?.data?.message || "Error saving transaction!");
+      const data = error.response?.data;
+      const fieldMessage = data?.errors
+        ? Object.values(data.errors)[0]?.[0]
+        : undefined;
+      const message =
+        fieldMessage || data?.message || "Error saving transaction!";
+      alert(message);
     },
   });
 }; 

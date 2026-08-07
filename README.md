@@ -1,54 +1,48 @@
-# React + TypeScript + Vite
+# Senopati Coffee
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Inventory & Distribution System**
 
-Currently, two official plugins are available:
+Sistem internal **Senopati Coffee** untuk mengelola inventori, gudang, distribusi stok ke outlet, dan pelaporan. Aplikasi ini merupakan sistem internal perusahaan, bukan aplikasi SaaS.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Teknologi
 
-## Expanding the ESLint configuration
+- **React 19** + **Vite 8** + **TypeScript**
+- **TanStack Query 5** untuk data fetching & caching
+- **React Router DOM v7** untuk routing SPA
+- **Axios** untuk HTTP client
+- **Zod** untuk validasi form
+- **ExcelJS** untuk ekspor laporan
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Prasyarat
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- Node.js (v18+)
+- Backend API Senopati Coffee (Laravel) berjalan di `http://localhost:8000`
+
+## Instalasi
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Aplikasi berjalan di `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+| Script        | Deskripsi                          |
+|---------------|------------------------------------|
+| `npm run dev` | Menjalankan dev server (Vite)      |
+| `npm run build` | Build produksi (tsc + vite)      |
+| `npm run lint` | Menjalankan ESLint                 |
+| `npm run preview` | Preview hasil build            |
+
+## Akun Default (Seeder Backend)
+
+| Role     | Email                          | Password    |
+|----------|--------------------------------|-------------|
+| Manager  | `manager@senopaticoffee.id`    | `password123` |
+| Keeper   | `keeper1@senopaticoffee.id` (s.d. `keeper3`) | `password123` |
+
+## Dokumentasi
+
+Dokumentasi lengkap terdapat di [`docs/DOKUMENTASI.md`](docs/DOKUMENTASI.md) (`docs/DOKUMENTASI.docx`).

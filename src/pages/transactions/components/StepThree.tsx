@@ -151,7 +151,7 @@ const StepThree = ({ handlePrevStep }: { handlePrevStep: () => void }) => {
                 />
                 <span>Total Items</span>
               </p>
-              <p className="font-semibold text-lg">3 Item</p>
+              <p className="font-semibold text-lg">{cart.length} Item</p>
             </div>
             <div className="flex w-full items-center justify-between">
               <p className="flex items-center gap-1 font-medium text-monday-gray">

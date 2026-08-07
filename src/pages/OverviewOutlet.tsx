@@ -53,7 +53,8 @@ const OverviewOutlet = () => {
           <div className="flex items-center gap-6 h-[92px] bg-white w-full rounded-3xl p-[18px]">
             <div className="flex flex-col gap-[6px] w-full">
               <h1 className="font-bold text-2xl">Dashboard Staff Gudang</h1>
-              <p className="font-medium text-lg text-monday-gray">
+              <p className="font-medium text-lg text-monday-gray">Senopati Coffee &mdash; Inventory & Distribution System</p>
+              <p className="font-medium text-sm text-monday-gray">
                 {user?.name} &mdash; {outlet?.name ?? "No Outlet Assigned"}
               </p>
             </div>

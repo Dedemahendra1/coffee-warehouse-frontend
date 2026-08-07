@@ -19,7 +19,7 @@ const AddTransaction = () => {
       iconInactive: "/assets/images/icons/tick-square-grey.svg",
     },
     {
-      label: "Distribusi Stok",
+      label: "Pilih Produk",
       iconActive: "/assets/images/icons/tick-square-blue.svg",
       iconInactive: "/assets/images/icons/tick-square-grey.svg",
     },
