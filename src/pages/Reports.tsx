@@ -126,10 +126,10 @@ const Reports = () => {
 
     return (
       <div className="reports-pagination">
-        <p className="reports-pagination-info">
+        <p className="reports-page-info">
           Menampilkan {startItem}–{endItem} dari {totalItems} data
         </p>
-        <div className="reports-pagination-btns">
+        <div className="reports-page-btns">
           <button
             onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
             disabled={currentPage === 1}
@@ -146,7 +146,7 @@ const Reports = () => {
               <button
                 key={pageNumber}
                 onClick={() => setCurrentPage(pageNumber)}
-                className={`reports-page-btn ${currentPage === pageNumber ? "active" : ""}`}
+                className={`reports-page-btn ${currentPage === pageNumber ? "reports-page-btn-active" : ""}`}
               >
                 {pageNumber}
               </button>
@@ -240,9 +240,9 @@ const Reports = () => {
           .reports-filter-select { height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid #e5e5e5; font-size: 14px; font-weight: 500; outline: none; background: #fff; }
           .reports-filter-select:focus { border-color: #1f2937; }
           .reports-reset-btn { height: 40px; padding: 0 12px; border-radius: 12px; font-weight: 600; font-size: 14px; color: #ef4444; border: 1px solid #fecaca; background: #fff; cursor: pointer; white-space: nowrap; }
-          .reports-pagination { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1px solid #e5e5e5; }
+          .reports-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 16px; padding-top: 16px; border-top: 1px solid #e5e5e5; }
           .reports-page-info { font-weight: 500; font-size: 14px; color: #9ca3af; }
-          .reports-page-btns { display: flex; align-items: center; gap: 6px; }
+          .reports-page-btns { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
           .reports-page-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 12px; font-size: 14px; font-weight: 500; border: 1px solid #e5e5e5; background: #fff; cursor: pointer; padding: 0; }
           .reports-page-btn:hover { background: #f3f4f6; }
           .reports-page-btn-active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
