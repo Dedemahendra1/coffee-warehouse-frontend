@@ -232,6 +232,9 @@ const EditDistribusiStok = () => {
                   <p className="font-semibold text-xl">{product.name}</p>
                   <p className="font-semibold text-xl text-monday-blue">
                     Rp {product.price.toLocaleString('id')}
+                    <span className="text-base text-monday-gray font-medium">
+                      {" "} / {product.unit}
+                    </span>
                   </p>
                 </div>
                 <div className="flex items-center gap-[6px] shrink-0">
@@ -240,7 +243,7 @@ const EditDistribusiStok = () => {
                     className="size-6 flex shrink-0"
                     alt="icon"
                   />
-                  <p className="font-semibold text-lg text-nowrap">{initialStock} Stock</p>
+                  <p className="font-semibold text-lg text-nowrap">{initialStock} {product.unit}</p>
                 </div>
               </div>
             </div>

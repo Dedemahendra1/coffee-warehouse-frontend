@@ -22,7 +22,7 @@ export default function DistributionTab({
   paginatedRows,
   filteredCount,
   hasActiveFilters,
-  searchQuery,
+  searchQuery: _searchQuery,
   renderPagination,
   renderEmptyState,
 }: DistributionTabProps) {
@@ -60,7 +60,7 @@ export default function DistributionTab({
                 <p className="reports-tab-text">{row.warehouse}</p>
                 <p className="reports-tab-text">{row.outlet}</p>
                 <p className="reports-tab-text reports-tab-bold">{row.product}</p>
-                <p className="reports-tab-text reports-tab-blue">{row.quantity}</p>
+                <p className="reports-tab-text reports-tab-blue">{row.quantity} {row.unit}</p>
                 <p className="reports-tab-text">{row.staff}</p>
               </div>
             ))}

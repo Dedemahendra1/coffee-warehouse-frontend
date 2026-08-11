@@ -126,7 +126,7 @@ const TransactionDetails = () => {
                       {item.product.name}
                     </p>
                     <p className="price font-semibold text-xl text-monday-blue">
-                      Rp {item.price.toLocaleString('id')} <span className="text-monday-gray">({item.quantity}x)</span>
+                      Rp {item.price.toLocaleString('id')} <span className="text-monday-gray">/ {item.product?.unit} ({item.quantity}x)</span>
                     </p>
                   </div>
                 </div>

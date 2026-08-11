@@ -60,7 +60,7 @@ const StepThree = ({ handlePrevStep }: { handlePrevStep: () => void }) => {
                 {product.name}
               </p>
               <p className="price font-semibold text-xl text-monday-blue">
-                Rp {product.price.toLocaleString('id')} <span className="text-monday-gray">({product.quantity}x)</span>
+                Rp {product.price.toLocaleString('id')} <span className="text-monday-gray">/ {product.unit} ({product.quantity}x)</span>
               </p>
             </div>
           </div>

@@ -199,7 +199,7 @@ const OverviewOutlet = () => {
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
                       <p className="font-bold text-xl text-orange-600">
-                        {p.pivot?.stock ?? 0}
+                        {p.pivot?.stock ?? 0} {p.unit}
                       </p>
                       <p className="font-medium text-xs text-monday-gray">
                         stok tersisa

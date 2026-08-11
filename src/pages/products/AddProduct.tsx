@@ -8,6 +8,7 @@ import { ApiErrorResponse } from "../../types/types";
 import { Link,   } from "react-router-dom";
 import { useRef, useState } from "react";
 import { ProductFormData, productSchema } from "../../schemas/productSchema";
+import { PRODUCT_UNITS } from "../../constants/units";
 import UserProfileCard from "../../components/UserProfileCard";
 
 const AddProduct = () => {
@@ -212,7 +213,7 @@ const AddProduct = () => {
                   placeholder=""
                 />
               </label>
-              <label className="group relative">
+              <label className="group relative rounded-3xl border-[1.5px] border-monday-border focus-within:border-monday-black transition-300 overflow-hidden">
                 <div className="flex items-center pr-4 absolute transform -translate-y-1/2 top-1/2 left-6 border-r-[1.5px] border-monday-border">
                   <img
                     src="/assets/images/icons/box-grey.svg"
@@ -221,15 +222,25 @@ const AddProduct = () => {
                   />
                 </div>
 
-                <p className="placeholder font-medium text-monday-gray text-sm absolute -translate-y-1/2 left-[81px] top-[25px] group-has-[:placeholder-shown]:top-[36px] group-focus-within:top-[25px] transition-300">
-                  Unit (pcs, kg, liter, pack, dll)
+                <p className="placeholder font-medium text-monday-gray text-sm absolute -translate-y-1/2 left-[81px] top-[25px] group-has-[:invalid]:top-[36px] group-focus-within:top-[25px] transition-300">
+                  Product Unit
                 </p>
 
-                <input
-                  type="text"
+                <select
                   {...register("unit")}
-                  className="appearance-none w-full h-[72px] font-semibold text-lg rounded-3xl border-[1.5px] border-monday-border pl-20 pr-6 pb-[14.5px] pt-[34.5px] placeholder-shown:pt-[14.5px] focus:border-monday-black transition-300"
-                  placeholder=""
+                  className="appearance-none w-full h-[72px] font-semibold text-lg outline-none pl-20 pr-6 pb-[14.5px] pt-[32px]"
+                >
+                  {PRODUCT_UNITS.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+
+                <img
+                  src="/assets/images/icons/arrow-down-grey.svg"
+                  className="absolute transform -translate-y-1/2 top-1/2 right-6 size-6"
+                  alt="icon"
                 />
               </label>
 

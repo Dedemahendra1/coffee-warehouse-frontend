@@ -53,7 +53,7 @@ export default function LowStockTab({
                     {item.sourceType}
                   </span>
                 </div>
-                <p className="reports-tab-text reports-tab-orange">{item.stock}</p>
+                <p className="reports-tab-text reports-tab-orange">{item.stock} {item.unit}</p>
               </div>
             ))}
           </div>

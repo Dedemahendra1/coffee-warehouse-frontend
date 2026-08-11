@@ -6,6 +6,7 @@ import { useFetchCategories } from "../../hooks/useCategories";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProductFormData, productSchema } from "../../schemas/productSchema";
+import { PRODUCT_UNITS } from "../../constants/units";
 import { AxiosError } from "axios";
 import { ApiErrorResponse } from "../../types/types"; 
 import UserProfileCard from "../../components/UserProfileCard";
@@ -36,6 +37,7 @@ const EditProduct = () => {
   useEffect(() => {
     if (product) {
       setValue("name", product.name);
+      setValue("unit", product.unit);
       setValue("price", product.price);
       setValue("about", product.about);
       setValue("category_id", product.category_id);
@@ -226,6 +228,36 @@ const EditProduct = () => {
               </label>
               {errors.name && (
                 <p className="text-red-500">{errors.name.message}</p>
+              )}
+              <label className="group relative rounded-3xl border-[1.5px] border-monday-border focus-within:border-monday-black transition-300 overflow-hidden">
+                <div className="flex items-center pr-4 absolute transform -translate-y-1/2 top-1/2 left-6 border-r-[1.5px] border-monday-border">
+                  <img
+                    src="/assets/images/icons/box-grey.svg"
+                    className="flex size-6 shrink-0"
+                    alt="icon"
+                  />
+                </div>
+                <p className="placeholder font-medium text-monday-gray text-sm absolute -translate-y-1/2 left-[81px] top-[25px] group-has-[:invalid]:top-[36px] group-focus-within:top-[25px] transition-300">
+                  Product Unit
+                </p>
+                <select
+                  {...register("unit")}
+                  className="appearance-none w-full h-[72px] font-semibold text-lg outline-none pl-20 pr-6 pb-[14.5px] pt-[32px]"
+                >
+                  {PRODUCT_UNITS.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+                <img
+                  src="/assets/images/icons/arrow-down-grey.svg"
+                  className="absolute transform -translate-y-1/2 top-1/2 right-6 size-6"
+                  alt="icon"
+                />
+              </label>
+              {errors.unit && (
+                <p className="text-red-500">{errors.unit.message}</p>
               )}
               <label className="group relative">
                 <div className="flex items-center pr-4 absolute transform -translate-y-1/2 top-1/2 left-6 border-r-[1.5px] border-monday-border ">

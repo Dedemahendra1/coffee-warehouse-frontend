@@ -77,7 +77,7 @@ const StepTwo = ({
                         </p>
                         <p className="font-semibold text-xl text-monday-blue">
                           Rp {product.price.toLocaleString('id')}
-                          <span className="text-monday-gray">({product.quantity}x)</span>
+                          <span className="text-monday-gray"> / {product.unit} ({product.quantity}x)</span>
                         </p>
                       </div>
                     </div>

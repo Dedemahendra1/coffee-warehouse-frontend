@@ -47,7 +47,7 @@ const ProductModal = ({
 
       if (totalQuantity > stock) {
         insufficientStock.push(
-          `${product.name}: tersedia ${stock}, diminta ${totalQuantity}`
+          `${product.name}: tersedia ${stock} ${product.unit}, diminta ${totalQuantity} ${product.unit}`
         );
         return;
       }
@@ -64,6 +64,7 @@ const ProductModal = ({
           thumbnail: product.thumbnail,
           quantity,
           sub_total: product.price * quantity,
+          unit: product.unit,
         });
       }
     });
@@ -130,6 +131,9 @@ const ProductModal = ({
                     </p>
                     <p className="price font-semibold text-xl text-monday-blue">
                       Rp {product.price.toLocaleString('id')}
+                      <span className="text-base text-monday-gray font-medium">
+                        {" "} / {product.unit}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -150,7 +154,7 @@ const ProductModal = ({
                     alt="icon"
                   />
                   <p className="stock font-semibold text-lg text-nowrap w-[124px] truncate">
-                  {product.pivot?.stock ?? 0} Stock
+                  {product.pivot?.stock ?? 0} {product.unit}
                   </p>
                 </div>
                 <div className="flex items-center rounded-2xl p-4 gap-3 bg-monday-blue/10 text-monday-blue">

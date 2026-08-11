@@ -12,6 +12,7 @@ export interface LowStockProduct {
   thumbnail: string;
   category?: { name: string };
   stock: number;
+  unit?: string;
   sourceName: string;
   sourceId: number;
   sourceType: "Gudang" | "Outlet";
@@ -24,6 +25,7 @@ export interface DistributionRow {
   outlet: string;
   product: string;
   quantity: number;
+  unit?: string;
   staff: string;
 }
 
@@ -85,6 +87,7 @@ export function useReportsData({
         .map((product) => ({
           ...product,
           stock: product.pivot?.stock ?? 0,
+          unit: product.unit ?? "",
           sourceName: warehouse.name,
           sourceId: warehouse.id,
           sourceType: "Gudang" as const,
@@ -97,6 +100,7 @@ export function useReportsData({
         .map((product) => ({
           ...product,
           stock: product.pivot?.stock ?? 0,
+          unit: product.unit ?? "",
           sourceName: outlet.name,
           sourceId: outlet.id,
           sourceType: "Outlet" as const,
@@ -134,6 +138,7 @@ export function useReportsData({
           outlet: transaction.merchant?.name ?? "-",
           product: transactionProduct.product?.name ?? "-",
           quantity: transactionProduct.quantity,
+          unit: transactionProduct.product?.unit ?? "",
           staff: transaction.merchant?.keeper?.name ?? "-",
         });
       }

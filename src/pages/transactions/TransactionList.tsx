@@ -229,7 +229,7 @@ const TransactionList = () => {
                                       <p className="font-semibold text-xl text-monday-blue">
                                         Rp {tp.price.toLocaleString("id")}
                                         <span className="text-monday-gray">
-                                          ({tp.quantity}x)
+                                          / {tp.product?.unit} ({tp.quantity}x)
                                         </span>
                                       </p>
                                     </div>
@@ -331,6 +331,9 @@ const TransactionList = () => {
                   </p>
                   <p className="font-semibold text-[17px] text-monday-blue">
                     Rp {selectedProduct.price.toLocaleString("id")}
+                    <span className="text-base text-monday-gray font-medium">
+                      {" "} / {selectedProduct.unit}
+                    </span>
                   </p>
                 </div>
                 <div className="flex size-[100px] rounded-2xl bg-monday-gray-background items-center justify-center overflow-hidden">

@@ -163,6 +163,9 @@ const WarehouseProductList = () => {
                               </p>
                               <p className="font-semibold text-xl text-monday-blue">
                                 Rp {product.price.toLocaleString("id")}
+                                <span className="text-base text-monday-gray font-medium">
+                                  {" "} / {product.unit}
+                                </span>
                               </p>
                             </div>
                           </div>
@@ -173,7 +176,7 @@ const WarehouseProductList = () => {
                               alt="icon"
                             />
                             <p className="font-semibold text-lg text-nowrap w-[124px] truncate">
-                              {product.pivot?.stock} Stock
+                              {product.pivot?.stock} {product.unit}
                             </p>
                           </div>
                           <div className="flex items-center gap-[6px] w-[154px] shrink-0">
@@ -264,6 +267,9 @@ const WarehouseProductList = () => {
                   </p>
                   <p className="font-semibold text-[17px] text-monday-blue">
                     Rp {selectedProduct.price.toLocaleString("id")}
+                    <span className="text-base text-monday-gray font-medium">
+                      {" "} / {selectedProduct.unit}
+                    </span>
                   </p>
                 </div>
                 <div className="flex size-[100px] rounded-2xl bg-monday-gray-background items-center justify-center overflow-hidden">

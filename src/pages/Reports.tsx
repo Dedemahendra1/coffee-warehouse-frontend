@@ -415,7 +415,7 @@ const Reports = () => {
                                     <div className="reports-prod-thumb"><img src={wp.thumbnail} alt="" /></div>
                                     <p className="reports-prod-name">{wp.name}</p>
                                     <p className="reports-prod-cat">{wp.category?.name}</p>
-                                    <p className={`reports-prod-stock ${(wp.pivot?.stock ?? 0) <= 5 ? "reports-prod-danger" : "reports-prod-normal"}`}>{wp.pivot?.stock ?? 0}</p>
+                                    <p className={`reports-prod-stock ${(wp.pivot?.stock ?? 0) <= 5 ? "reports-prod-danger" : "reports-prod-normal"}`}>{wp.pivot?.stock ?? 0} {wp.unit}</p>
                                   </div>
                                 ))}
                               </div>
@@ -458,7 +458,7 @@ const Reports = () => {
                                     <div className="reports-prod-thumb"><img src={op.thumbnail} alt="" /></div>
                                     <p className="reports-prod-name">{op.name}</p>
                                     <p className="reports-prod-cat">{op.category?.name}</p>
-                                    <p className={`reports-prod-stock ${(op.pivot?.stock ?? 0) <= 5 ? "reports-prod-danger" : "reports-prod-normal"}`}>{op.pivot?.stock ?? 0}</p>
+                                    <p className={`reports-prod-stock ${(op.pivot?.stock ?? 0) <= 5 ? "reports-prod-danger" : "reports-prod-normal"}`}>{op.pivot?.stock ?? 0} {op.unit}</p>
                                   </div>
                                 ))}
                               </div>

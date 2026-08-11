@@ -8,6 +8,7 @@ export interface CartProduct {
     quantity: number;
     sub_total: number;
     category: string;
+    unit: string;
   }
   
   export type CartItem = {

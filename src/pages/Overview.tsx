@@ -12,7 +12,7 @@ const Overview = () => {
   const { data: transactions, isPending: loadingTransactions } = useFetchAllTransactions();
   const { data: warehousesData, isPending: loadingWarehouses } = useFetchWarehouses();
   const { data: outletsData, isPending: loadingOutlets } = useFetchOutlets();
-  const { data: products, isPending: loadingProducts } = useFetchProducts();
+  const { isPending: loadingProducts } = useFetchProducts();
 
   const [openTransactionIds, setOpenTransactionIds] = useState<number[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
@@ -27,7 +27,6 @@ const Overview = () => {
   const warehouseList = Array.isArray(warehousesData) ? warehousesData : [];
   const outletList = Array.isArray(outletsData) ? outletsData : [];
   const transactionList = Array.isArray(transactions) ? transactions : [];
-  const productList = Array.isArray(products) ? products : [];
 
   const totalWarehouses = warehouseList.length;
   const totalOutlets = outletList.length;
@@ -237,7 +236,7 @@ const Overview = () => {
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           <p className="font-bold text-xl text-orange-600">
-                            {p.pivot?.stock ?? 0}
+                            {p.pivot?.stock ?? 0} {p.unit}
                           </p>
                           <p className="font-medium text-xs text-monday-gray">
                             stok tersisa

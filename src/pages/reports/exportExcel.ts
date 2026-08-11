@@ -174,9 +174,9 @@ function downloadWorkbook(workbook: ExcelJS.Workbook, filename: string) {
 
 export async function exportLowStockToExcel(
   lowStockProducts: LowStockProduct[],
-  totalWarehouseStock: number,
-  totalOutletStock: number,
-  totalDistributed: number
+  _totalWarehouseStock: number,
+  _totalOutletStock: number,
+  _totalDistributed: number
 ) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Senopati Coffee";
@@ -200,7 +200,9 @@ export async function exportLowStockToExcel(
       lowStockItem.category?.name ?? "-",
       lowStockItem.sourceName,
       lowStockItem.sourceType,
-      lowStockItem.stock,
+      lowStockItem.unit
+        ? `${lowStockItem.stock} ${lowStockItem.unit}`
+        : lowStockItem.stock,
     ];
     const dataRow = worksheet.addRow(rowData);
     const rowIndex = index + 1;
@@ -267,7 +269,9 @@ export async function exportDistributionToExcel(distributionRows: DistributionRo
       distributionRow.warehouse,
       distributionRow.outlet,
       distributionRow.product,
-      distributionRow.quantity,
+      distributionRow.unit
+        ? `${distributionRow.quantity} ${distributionRow.unit}`
+        : distributionRow.quantity,
       distributionRow.staff,
     ];
     const dataRow = worksheet.addRow(rowData);
