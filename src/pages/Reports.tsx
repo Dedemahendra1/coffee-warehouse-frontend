@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import UserProfileCard from "../components/UserProfileCard";
@@ -54,6 +54,12 @@ const Reports = () => {
     activeTab === "distribusi" ? filteredDistribution.length : filteredLowStock.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ROWS_PER_PAGE));
 
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const resetFilters = () => {
     setSearchQuery("");
     setFilterDateFrom("");
@@ -83,30 +89,40 @@ const Reports = () => {
     searchQuery || filterDateFrom || filterDateTo || filterWarehouse || filterOutlet
   );
 
+  const buildPaginationPages = (
+    page: number,
+    total: number
+  ): (number | "...")[] => {
+    if (total <= 1) return [1];
+
+    const windowStart = Math.max(2, page - 1);
+    const windowEnd = Math.min(total - 1, page + 1);
+
+    const pageSet = new Set<number>([1, total]);
+    for (let current = windowStart; current <= windowEnd; current++) {
+      pageSet.add(current);
+    }
+
+    const sortedPages = [...pageSet].sort((a, b) => a - b);
+
+    const result: (number | "...")[] = [];
+    let previous = 0;
+    for (const current of sortedPages) {
+      if (current - previous > 1) result.push("...");
+      result.push(current);
+      previous = current;
+    }
+    return result;
+  };
+
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
-    const pages: (number | "...")[] = [];
-    if (totalPages <= 5) {
-      for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
-        pages.push(pageNumber);
-      }
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("...");
-      for (
-        let pageNumber = Math.max(2, currentPage - 1);
-        pageNumber <= Math.min(totalPages - 1, currentPage + 1);
-        pageNumber++
-      ) {
-        pages.push(pageNumber);
-      }
-      if (currentPage < totalPages - 2) pages.push("...");
-      pages.push(totalPages);
-    }
+    const safePage = Math.min(currentPage, totalPages);
+    const pages = buildPaginationPages(safePage, totalPages);
 
-    const startItem = Math.min((currentPage - 1) * ROWS_PER_PAGE + 1, totalItems);
-    const endItem = Math.min(currentPage * ROWS_PER_PAGE, totalItems);
+    const startItem = (safePage - 1) * ROWS_PER_PAGE + 1;
+    const endItem = Math.min(safePage * ROWS_PER_PAGE, totalItems);
 
     return (
       <div className="reports-pagination">
