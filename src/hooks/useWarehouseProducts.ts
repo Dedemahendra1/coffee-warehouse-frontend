@@ -66,3 +66,27 @@ export const useUpdateWarehouseProduct = () => {
   });
 };
 
+export const useDetachWarehouseProduct = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError<ApiErrorResponse>, { warehouse_id: number; product_id: number }>({
+    mutationFn: async ({ warehouse_id, product_id }) => {
+      await apiClient.delete(`/warehouses/${warehouse_id}/products/${product_id}`);
+    },
+    onSuccess: (_, { warehouse_id, product_id }) => {
+      queryClient.invalidateQueries({ queryKey: ["warehouse", warehouse_id] });
+      queryClient.invalidateQueries({ queryKey: ["warehouse-product", warehouse_id, product_id] });
+      queryClient.invalidateQueries({ queryKey: ["warehouses"] });
+    },
+    onError: (error) => {
+      const data = error.response?.data;
+      const fieldMessage = data?.errors
+        ? Object.values(data.errors)[0]?.[0]
+        : undefined;
+      const message =
+        fieldMessage || data?.message || "Error removing product!";
+      alert(message);
+    },
+  });
+};
+

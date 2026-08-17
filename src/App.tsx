@@ -44,9 +44,7 @@ import OutletList from "./pages/outlets/OutletList";
 import AddOutlet from "./pages/outlets/AddOutlet";
 import EditOutlet from "./pages/outlets/EditOutlet";
 
-// Import Transaction Pages
-import TransactionList from "./pages/transactions/TransactionList";
-import AddTransaction from "./pages/transactions/AddTransaction";
+
 
 // Import Outlet Product Pages
 import OutletProductList from "./pages/outlet_products/OutletProductList";
@@ -57,9 +55,9 @@ import WarehouseProductList from "./pages/warehouse_products/WarehouseProductLis
 import AssignWarehouseProduct from "./pages/warehouse_products/DistribusiStok";
 import EditWarehouseProduct from "./pages/warehouse_products/EditWarehouseProduct";
 import AssignUserRoles from "./pages/user_roles/AssignUserRoles";
-import TransactionDetails from "./pages/transactions/TransactionDetails";
-import TransactionProvider from "./providers/TransactionProvider";
-import TransactionSuccess from "./pages/transactions/TransactionSuccess";
+
+// Import Stock Out Pages
+import StockOutList from "./pages/stock_outs/StockOutList";
 
 // ✅ Create a QueryClient instance for React Query
 const queryClient = new QueryClient();
@@ -115,34 +113,28 @@ function App() {
           <Route path="/outlets/add" element={<ProtectedRoute roles={['manager']}><AddOutlet /></ProtectedRoute>} />
           <Route path="/outlets/edit/:id" element={<ProtectedRoute roles={['manager']}><EditOutlet /></ProtectedRoute>} /> 
 
-          <Route path="/transactions" element={<ProtectedRoute roles={['keeper']}><TransactionList /></ProtectedRoute>} />
-          <Route path="/transactions/add" element={
-            <ProtectedRoute roles={['keeper']}>
-              <TransactionProvider> {/* ✅ Wrap only the Add Transaction page */}
-                <AddTransaction />
-              </TransactionProvider>
-            </ProtectedRoute>
-          } />
-          <Route path="/transactions/details/:id" element={<ProtectedRoute roles={['keeper']}><TransactionDetails /></ProtectedRoute>} />
-          <Route path="/transactions/success" element={<ProtectedRoute roles={['keeper']}><TransactionSuccess /></ProtectedRoute>} />
+
 
 
 
           {/* Outlet Product Routes (Manager & Keeper) */}
           <Route path="/outlet-products/:id" element={<ProtectedRoute roles={['manager', 'keeper']}><OutletProductList /></ProtectedRoute>} />
-          <Route path="/outlet-products/:id/distribusi-stok" element={<ProtectedRoute roles={['manager', 'keeper']}><DistribusiStok /></ProtectedRoute>} />
+          <Route path="/outlet-products/:id/distribusi-stok" element={<ProtectedRoute roles={['keeper']}><DistribusiStok /></ProtectedRoute>} />
 
           {/* ✅ Updated Route for Editing Assigned Outlet Product */}
           <Route path="/outlet-products/:outletId/edit-distribusi-stok/:productId" 
-            element={<ProtectedRoute roles={['manager', 'keeper']}><EditDistribusiStok /></ProtectedRoute>} />
+            element={<ProtectedRoute roles={['keeper']}><EditDistribusiStok /></ProtectedRoute>} />
 
           {/* warehouse Product Routes (Manager & Keeper) */}
           <Route path="/warehouse-products/:id" element={<ProtectedRoute roles={['manager', 'keeper']}><WarehouseProductList /></ProtectedRoute>} />
-          <Route path="/warehouse-products/:id/assign" element={<ProtectedRoute roles={['manager', 'keeper']}><AssignWarehouseProduct /></ProtectedRoute>} />
+          <Route path="/warehouse-products/:id/assign" element={<ProtectedRoute roles={['keeper']}><AssignWarehouseProduct /></ProtectedRoute>} />
 
           {/* ✅ Updated Route for Editing Assigned Warehouse Product */}
           <Route path="/warehouse-products/:warehouseId/edit-assign/:productId" 
-            element={<ProtectedRoute roles={['manager', 'keeper']}><EditWarehouseProduct /></ProtectedRoute>} />
+            element={<ProtectedRoute roles={['keeper']}><EditWarehouseProduct /></ProtectedRoute>} />
+
+          {/* Stock Out Routes (Manager & Keeper) */}
+          <Route path="/stock-outs" element={<ProtectedRoute roles={['manager', 'keeper']}><StockOutList /></ProtectedRoute>} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

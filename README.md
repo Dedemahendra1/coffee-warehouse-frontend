@@ -43,6 +43,21 @@ Aplikasi berjalan di `http://localhost:5173`.
 | Manager  | `manager@senopaticoffee.id`    | `password123` |
 | Keeper   | `keeper1@senopaticoffee.id` (s.d. `keeper3`) | `password123` |
 
+## Peran & Hak Akses
+
+| Fitur                                  | Manager | Keeper |
+|----------------------------------------|:-------:|:------:|
+| Master data (kategori, produk, gudang, outlet, user, role) | ✔ | – |
+| Stok gudang (Tambah Stok / Barang Masuk) | –    | ✔      |
+| Stok outlet & distribusi ke outlet     | –       | ✔      |
+| Pencatatan stock out (pengeluaran stok) | –      | ✔      |
+| Lihat stok gudang/outlet & stock out   | ✔       | ✔ (hanya outlet sendiri) |
+| Laporan (reports)                      | ✔       | –      |
+
+Hak akses juga ditegakkan di backend (middleware `role:...` + scoping di service/controller).
+
+> **Catatan:** Modul Transaksi Penjualan tetap ada di backend tetapi dinonaktifkan dari UI (tidak ada menu, dashboard, atau laporan yang menampilkan data transaksi).
+
 ## Dokumentasi
 
 Dokumentasi lengkap terdapat di [`docs/DOKUMENTASI.md`](docs/DOKUMENTASI.md) (`docs/DOKUMENTASI.docx`).

@@ -5,4 +5,5 @@ export * from "./product";
 export * from "./transaction";
 export * from "./cart";
 export * from "./warehouse";
+export * from "./stockout";
 export * from "./shared";

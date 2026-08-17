@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { useFetchWarehouses } from "../../hooks/useWarehouses";
 import { useFetchOutlets } from "../../hooks/useOutlets";
-import { useFetchAllTransactions } from "../../hooks/useTransactions";
+import { useFetchStockOuts } from "../../hooks/useStockOuts";
 import { Warehouse } from "../../types/warehouse";
 
-export type Tab = "stok-habis" | "gudang" | "outlet" | "distribusi";
+export type Tab = "stok-habis" | "gudang" | "outlet" | "distribusi" | "stock-out";
 
 export interface LowStockProduct {
   id: number;
@@ -29,6 +29,16 @@ export interface DistributionRow {
   staff: string;
 }
 
+export interface StockOutRow {
+  id: number;
+  date: string;
+  outlet: string;
+  product: string;
+  quantity: number;
+  unit?: string;
+  reason: string;
+}
+
 interface UseReportsDataParams {
   searchQuery: string;
   filterDateFrom: string;
@@ -50,13 +60,12 @@ export function useReportsData({
 }: UseReportsDataParams) {
   const { data: warehousesData, isPending: loadingWarehouses } = useFetchWarehouses();
   const { data: outletsData, isPending: loadingOutlets } = useFetchOutlets();
-  const { data: transactionsData, isPending: loadingTransactions } = useFetchAllTransactions();
+  const { data: stockOutsData, isPending: loadingStockOuts } = useFetchStockOuts();
 
   const warehouseList: Warehouse[] = Array.isArray(warehousesData) ? warehousesData : [];
   const outletList = Array.isArray(outletsData) ? outletsData : [];
-  const transactionList = Array.isArray(transactionsData) ? transactionsData : [];
 
-  const isLoading = loadingWarehouses || loadingOutlets || loadingTransactions;
+  const isLoading = loadingWarehouses || loadingOutlets || loadingStockOuts;
 
   const totalWarehouseStock = warehouseList.reduce(
     (accumulator, warehouse) =>
@@ -110,41 +119,21 @@ export function useReportsData({
     return [...warehouseProducts, ...outletProducts];
   }, [warehouseList, outletList]);
 
-  const productWarehouseMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    for (const outlet of outletList) {
-      for (const outletProduct of outlet.products ?? []) {
-        if (outletProduct.pivot?.warehouse_id) {
-          const matchedWarehouse = warehouseList.find(
-            (warehouse) => warehouse.id === outletProduct.pivot!.warehouse_id
-          );
-          if (matchedWarehouse) {
-            map[outletProduct.id] = matchedWarehouse.name;
-          }
-        }
-      }
-    }
-    return map;
-  }, [warehouseList, outletList]);
+  const distributionRows = useMemo(() => {
+    return [] as DistributionRow[];
+  }, []);
 
-  const distributionRows = useMemo<DistributionRow[]>(() => {
-    const rows: DistributionRow[] = [];
-    for (const transaction of transactionList) {
-      for (const transactionProduct of transaction.transaction_products ?? []) {
-        rows.push({
-          id: `${transaction.id}-${transactionProduct.id}`,
-          date: transaction.created_at ?? "",
-          warehouse: productWarehouseMap[transactionProduct.product_id] ?? "-",
-          outlet: transaction.merchant?.name ?? "-",
-          product: transactionProduct.product?.name ?? "-",
-          quantity: transactionProduct.quantity,
-          unit: transactionProduct.product?.unit ?? "",
-          staff: transaction.merchant?.keeper?.name ?? "-",
-        });
-      }
-    }
-    return rows;
-  }, [transactionList, productWarehouseMap]);
+  const stockOutRows = useMemo<StockOutRow[]>(() => {
+    return (stockOutsData ?? []).map((so) => ({
+      id: so.id,
+      date: so.created_at ?? "",
+      outlet: so.merchant?.name ?? "-",
+      product: so.product?.name ?? "-",
+      quantity: so.quantity,
+      unit: so.product?.unit ?? "",
+      reason: so.reason ?? "-",
+    }));
+  }, [stockOutsData]);
 
   const filteredLowStock = useMemo(() => {
     let result = allLowStockProducts;
@@ -192,6 +181,28 @@ export function useReportsData({
     return result;
   }, [distributionRows, searchQuery, filterDateFrom, filterDateTo, filterWarehouse, filterOutlet]);
 
+  const filteredStockOut = useMemo(() => {
+    let result = stockOutRows;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (row) =>
+          row.product.toLowerCase().includes(query) ||
+          row.outlet.toLowerCase().includes(query)
+      );
+    }
+    if (filterDateFrom) {
+      result = result.filter((row) => row.date >= filterDateFrom);
+    }
+    if (filterDateTo) {
+      result = result.filter((row) => row.date <= filterDateTo + "T23:59:59");
+    }
+    if (filterOutlet) {
+      result = result.filter((row) => row.outlet === filterOutlet);
+    }
+    return result;
+  }, [stockOutRows, searchQuery, filterDateFrom, filterDateTo, filterOutlet]);
+
   const paginatedLowStock = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     return filteredLowStock.slice(startIndex, startIndex + rowsPerPage);
@@ -202,20 +213,24 @@ export function useReportsData({
     return filteredDistribution.slice(startIndex, startIndex + rowsPerPage);
   }, [filteredDistribution, currentPage, rowsPerPage]);
 
+  const paginatedStockOut = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    return filteredStockOut.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredStockOut, currentPage, rowsPerPage]);
+
   const uniqueWarehouseNames = useMemo(
     () => [...new Set(distributionRows.map((row) => row.warehouse).filter(Boolean))],
     [distributionRows]
   );
 
   const uniqueOutletNames = useMemo(
-    () => [...new Set(distributionRows.map((row) => row.outlet).filter(Boolean))],
-    [distributionRows]
+    () => [...new Set(stockOutRows.map((row) => row.outlet).filter(Boolean))],
+    [stockOutRows]
   );
 
   return {
     warehouseList,
     outletList,
-    transactionList,
     isLoading,
     totalWarehouseStock,
     totalOutletStock,
@@ -223,8 +238,10 @@ export function useReportsData({
     allLowStockProducts,
     filteredLowStock,
     filteredDistribution,
+    filteredStockOut,
     paginatedLowStock,
     paginatedDistribution,
+    paginatedStockOut,
     uniqueWarehouseNames,
     uniqueOutletNames,
   };

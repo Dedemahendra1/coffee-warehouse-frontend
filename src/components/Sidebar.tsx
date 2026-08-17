@@ -42,13 +42,7 @@ const Sidebar = () => {
           iconBlue: "/assets/images/icons/bag-blue-fill.svg",
           roles: ["manager"],
         },
-        {
-          label: "Transactions",
-          path: "/transactions",
-          iconBlack: "/assets/images/icons/card-black.svg",
-          iconBlue: "/assets/images/icons/card-blue-fill.svg",
-          roles: ["keeper"],
-        },
+
         {
           label: "Categories",
           path: "/categories",
@@ -91,6 +85,13 @@ const Sidebar = () => {
           iconBlue: "/assets/images/icons/shop-blue-fill.svg",
           roles: ["keeper"],
         },
+        {
+          label: "Stock Out",
+          path: "/stock-outs",
+          iconBlack: "/assets/images/icons/box-black.svg",
+          iconBlue: "/assets/images/icons/box-black.svg",
+          roles: ["manager", "keeper"],
+        },
       ],
     },
     {
@@ -122,13 +123,6 @@ const Sidebar = () => {
               iconBlue: "/assets/images/icons/profile-tick-blue.svg",
             },
           ],
-        }, 
-        {
-          label: "Settings",
-          path: "/settings",
-          iconBlack: "/assets/images/icons/setting-black.svg",
-          iconBlue: "/assets/images/icons/setting-black.svg",
-          roles: ["manager", "keeper"],
         },
       ],
     },

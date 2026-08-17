@@ -1,32 +1,46 @@
-import { Link, useParams } from "react-router-dom";
-import { useFetchWarehouse } from "../../hooks/useWarehouses";
 import Sidebar from "../../components/Sidebar";
-import React, { useState } from "react";
-import { useFetchProduct } from "../../hooks/useProducts";
+import { Link } from "react-router-dom";
 import UserProfileCard from "../../components/UserProfileCard";
+import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { useDetachWarehouseProduct } from "../../hooks/useWarehouseProducts";
+import { useMyOutletProfile } from "../../hooks/useOutlets";
+import { useFetchStockOuts, useCreateStockOut } from "../../hooks/useStockOuts";
 
-const WarehouseProductList = () => {
-  const { id } = useParams<{ id: string }>(); // Get Warehouse ID from URL
-  const { data: warehouse, isPending } = useFetchWarehouse(Number(id));
+const StockOutList = () => {
   const { user } = useAuth();
   const isKeeper = user?.roles?.includes("keeper");
-  const detachProduct = useDetachWarehouseProduct();
 
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(
-    null
-  );
-  const { data: selectedProduct } = useFetchProduct(selectedProductId || 0);
+  const { data: outlet } = useMyOutletProfile({ enabled: !!isKeeper });
+  const { data: stockOuts = [] } = useFetchStockOuts();
 
-  const handleDetach = (productId: number) => {
-    if (window.confirm("Hapus produk ini dari gudang?")) {
-      detachProduct.mutate({ warehouse_id: Number(id), product_id: productId });
-    }
+  const createStockOut = useCreateStockOut();
+
+  const [showModal, setShowModal] = useState(false);
+  const [productId, setProductId] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [reason, setReason] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!outlet || !productId || !quantity) return;
+
+    createStockOut.mutate(
+      {
+        merchant_id: outlet.id,
+        product_id: Number(productId),
+        quantity: Number(quantity),
+        reason: reason || undefined,
+      },
+      {
+        onSuccess: () => {
+          setShowModal(false);
+          setProductId("");
+          setQuantity("");
+          setReason("");
+        },
+      }
+    );
   };
-
-  if (!warehouse) return <p>Warehouse not found</p>;
-  if (isPending) return <p>Loading warehouse products...</p>;
 
   return (
     <>
@@ -39,8 +53,9 @@ const WarehouseProductList = () => {
           >
             <div className="flex items-center gap-6 h-[92px] bg-white w-full rounded-3xl p-[18px]">
               <div className="flex flex-col gap-[6px] w-full">
-                <h1 className="font-bold text-2xl">Warehouse Details</h1>
-                <Link to={'/warehouses'}
+                <h1 className="font-bold text-2xl">Stock Out</h1>
+                <Link
+                  to={isKeeper ? "/overview-outlet" : "/overview"}
                   className="flex items-center gap-[6px] text-monday-gray font-semibold"
                 >
                   <img
@@ -48,7 +63,7 @@ const WarehouseProductList = () => {
                     className="size-4 flex shrink-0"
                     alt="icon"
                   />
-                  Manage Warehouses
+                  Dashboard
                 </Link>
               </div>
               <div className="flex items-center flex-nowrap gap-3">
@@ -93,29 +108,40 @@ const WarehouseProductList = () => {
             >
               <div className="flex size-16 rounded-2xl bg-monday-background items-center justify-center overflow-hidden">
                 <img
-                  src={warehouse.photo}
+                  src={isKeeper ? outlet?.photo : "/assets/images/icons/box-grey.svg"}
                   className="size-full object-contain"
                   alt="icon"
                 />
               </div>
               <div className="flex flex-col gap-2 flex-1">
-                <p className="font-semibold text-lg">{warehouse.name}</p>
+                <p className="font-semibold text-xl">
+                  {isKeeper ? outlet?.name : "Senopati Coffee"}
+                </p>
                 <p className="flex items-center gap-1 font-medium text-lg text-monday-gray">
                   <img
-                    src="/assets/images/icons/call-grey.svg"
+                    src="/assets/images/icons/box-grey.svg"
                     className="size-6 flex shrink-0"
                     alt="icon"
                   />
-                  <span>{warehouse.phone}</span>
+                  <span>
+                    {isKeeper
+                      ? "Barang keluar / hilang dari stok outlet Anda"
+                      : "Monitoring barang keluar seluruh outlet"}
+                  </span>
                 </p>
               </div>
-              {!isKeeper && (
-                <Link
-                  to={`/warehouses/edit/${warehouse.id}`}
-                  className="btn btn-black w-[174px] font-semibold text-nowrap"
+              {isKeeper && (
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="btn btn-primary font-semibold"
                 >
-                  Edit Warehouse
-                </Link>
+                  Tambah Stock Out
+                  <img
+                    src="/assets/images/icons/add-square-white.svg"
+                    className="flex sixe-6 shrink-0"
+                    alt="icon"
+                  />
+                </button>
               )}
             </section>
             <section
@@ -128,27 +154,19 @@ const WarehouseProductList = () => {
               >
                 <div className="flex flex-col gap-[6px]">
                   <p className="flex items-center gap-[6px]">
+                    <img
+                      src="/assets/images/icons/box-black.svg"
+                      className="size-6 flex shrink-0"
+                      alt="icon"
+                    />
                     <span className="font-semibold text-2xl">
-                      {warehouse.products.length} Total Products
+                      {stockOuts.length} Total Stock Out
                     </span>
                   </p>
                   <p className="font-semibold text-lg text-monday-gray">
-                    View and update your Product Warehouses list here.
+                    View and manage your stock out list here.
                   </p>
                 </div>
-                {isKeeper && (
-                  <Link
-                    to={`/warehouse-products/${id}/assign`}
-                    className="btn btn-primary font-semibold"
-                  >
-                    Tambah Stok
-                    <img
-                      src="/assets/images/icons/add-square-white.svg"
-                      className="flex sixe-6 shrink-0"
-                      alt="icon"
-                    />
-                  </Link>
-                )}
               </div>
               <hr className="border-monday-border" />
               <div
@@ -156,80 +174,60 @@ const WarehouseProductList = () => {
                 className="flex flex-col px-4 gap-5 flex-1"
               >
                 <div className="flex items-center justify-between">
-                  <p className="font-semibold text-xl">All Products</p>
+                  <p className="font-semibold text-xl">All Stock Out</p>
                 </div>
-
-                {warehouse.products.length > 0 ? (
+                {stockOuts.length > 0 ? (
                   <div className="flex flex-col gap-5">
-                    {warehouse.products.map((product) => (
-                      <React.Fragment key={product.id}>
+                    {stockOuts.map((so) => (
+                      <React.Fragment key={so.id}>
                         <div className="card flex items-center justify-between gap-6">
-                          <div className="flex items-center gap-3 w-[260px] shrink-0">
+                          <div className="flex items-center gap-3 w-[280px] shrink-0">
                             <div className="flex size-[86px] rounded-2xl bg-monday-background items-center justify-center overflow-hidden">
                               <img
-                                src={product.thumbnail}
+                                src={so.product?.thumbnail}
                                 className="size-full object-contain"
                                 alt="icon"
                               />
                             </div>
                             <div className="flex flex-col gap-2 flex-1">
                               <p className="font-semibold text-xl w-[162px] truncate">
-                                {product.name}
+                                {so.product?.name}
                               </p>
-                              <p className="font-semibold text-xl text-monday-blue">
-                                Rp {product.price.toLocaleString("id")}
-                                <span className="text-base text-monday-gray font-medium">
-                                  {" "} / {product.unit}
-                                </span>
+                              <p className="font-semibold text-lg text-monday-gray">
+                                {so.product?.unit}
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-[6px] w-[154px] shrink-0">
+                          <div className="flex items-center gap-[6px] w-[120px] shrink-0">
                             <img
                               src="/assets/images/icons/box-black.svg"
                               className="size-6 flex shrink-0"
                               alt="icon"
                             />
-                            <p className="font-semibold text-lg text-nowrap w-[124px] truncate">
-                              {product.pivot?.stock} {product.unit}
+                            <p className="font-semibold text-lg text-nowrap">
+                              {so.quantity} {so.product?.unit}
                             </p>
                           </div>
-                          <div className="flex items-center gap-[6px] w-[154px] shrink-0">
-                            <img
-                              src={product.category.photo}
-                              className="size-6 flex shrink-0"
-                              alt="icon"
-                            />
-                            <p className="font-semibold text-lg text-nowrap w-[124px] truncate">
-                              {product.category.name}
+                          <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
+                            <p className="font-semibold text-lg">
+                              {so.reason || "-"}
+                            </p>
+                            <p className="font-medium text-base text-monday-gray">
+                              {new Date(so.created_at).toLocaleDateString("id-ID")}
                             </p>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <button
-                              onClick={() => {
-                                setSelectedProductId(product.id);
-                              }}
-                              className="btn btn-primary-opacity min-w-[130px] font-semibold"
-                            >
-                              Details
-                            </button>
-                            {isKeeper && (
-                              <Link
-                                to={`/warehouse-products/${id}/edit-assign/${product.id}`}
-                                className="btn btn-black min-w-[130px] font-semibold"
-                              >
-                                Transfer Stok
-                              </Link>
-                            )}
-                            {!isKeeper && (
-                              <button
-                                onClick={() => handleDetach(product.id)}
-                                className="btn btn-primary-opacity min-w-[130px] font-semibold"
-                              >
-                                Remove
-                              </button>
-                            )}
-                          </div>
+                          {!isKeeper && (
+                            <div className="flex items-center gap-[6px] w-[220px] shrink-0">
+                              <img
+                                src="/assets/images/icons/shop-black.svg"
+                                className="size-6 flex shrink-0"
+                                alt="icon"
+                              />
+                              <p className="font-semibold text-lg text-nowrap w-[180px] truncate">
+                                {so.merchant?.name}
+                              </p>
+                            </div>
+                          )}
                         </div>
                         <hr className="border-monday-border last:hidden" />
                       </React.Fragment>
@@ -256,17 +254,17 @@ const WarehouseProductList = () => {
         </div>
       </div>
 
-      {selectedProductId && selectedProduct && (
+      {isKeeper && showModal && outlet && (
         <div className="modal flex flex-1 items-center justify-center h-full fixed top-0 w-full">
           <div
-            onClick={() => setSelectedProductId(null)}
+            onClick={() => setShowModal(false)}
             className="absolute w-full h-full bg-[#292D32B2] cursor-pointer"
           />
           <div className="relative flex flex-col w-[406px] shrink-0 rounded-3xl p-[18px] gap-5 bg-white">
             <div className="modal-header flex items-center justify-between">
-              <p className="font-semibold text-xl">Product Details</p>
+              <p className="font-semibold text-xl">Tambah Stock Out</p>
               <button
-                onClick={() => setSelectedProductId(null)}
+                onClick={() => setShowModal(false)}
                 className="flex size-14 rounded-full items-center justify-center bg-monday-gray-background"
               >
                 <img
@@ -276,45 +274,59 @@ const WarehouseProductList = () => {
                 />
               </button>
             </div>
-            <div className="modal-content flex flex-col rounded-3xl border border-monday-border p-4 gap-5">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-2">
-                  <p className="flex items-center gap-[6px] font-semibold text-lg">
-                    <img
-                      src={selectedProduct.category.photo}
-                      className="size-6 flex shrink-0"
-                      alt="icon"
-                    />
-                    {selectedProduct.name}
-                  </p>
-                  <p className="font-bold text-lg">
-                    {selectedProduct.category.name}
-                  </p>
-                  <p className="font-semibold text-[17px] text-monday-blue">
-                    Rp {selectedProduct.price.toLocaleString("id")}
-                    <span className="text-base text-monday-gray font-medium">
-                      {" "} / {selectedProduct.unit}
-                    </span>
-                  </p>
-                </div>
-                <div className="flex size-[100px] rounded-2xl bg-monday-gray-background items-center justify-center overflow-hidden">
-                  <img
-                    src={selectedProduct.thumbnail}
-                    className="size-full object-contain"
-                    alt="icon"
-                  />
-                </div>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-sm text-monday-gray">
+                  Produk
+                </label>
+                <select
+                  value={productId}
+                  onChange={(e) => setProductId(e.target.value)}
+                  className="h-[52px] rounded-2xl border border-monday-border px-4"
+                  required
+                >
+                  <option value="">Pilih Produk</option>
+                  {outlet.products?.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} (Stok: {p.pivot?.stock ?? 0} {p.unit})
+                    </option>
+                  ))}
+                </select>
               </div>
-              <hr className="border-monday-border" />
-              <div>
-                <p className="font-medium text-sm text-monday-gray">
-                  Product About
-                </p>
-                <p className="font-semibold leading-[160%]">
-                  {selectedProduct.about}
-                </p>
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-sm text-monday-gray">
+                  Kuantitas
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder="Masukkan jumlah barang keluar"
+                  className="h-[52px] rounded-2xl border border-monday-border px-4"
+                  required
+                />
               </div>
-            </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-sm text-monday-gray">
+                  Alasan (opsional)
+                </label>
+                <input
+                  type="text"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="cth: Barang rusak, stok kadaluarsa"
+                  className="h-[52px] rounded-2xl border border-monday-border px-4"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={createStockOut.isPending}
+                className="btn btn-primary font-semibold justify-center"
+              >
+                {createStockOut.isPending ? "Menyimpan..." : "Simpan Stock Out"}
+              </button>
+            </form>
           </div>
         </div>
       )}
@@ -322,4 +334,4 @@ const WarehouseProductList = () => {
   );
 };
 
-export default WarehouseProductList;
+export default StockOutList;

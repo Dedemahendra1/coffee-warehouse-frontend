@@ -67,7 +67,7 @@ const DistribusiStokWarehouse = () => {
     <div id="Top-Bar" className="flex items-center w-full gap-6 mt-[30px] mb-6">
       <div className="flex items-center gap-6 h-[92px] bg-white w-full rounded-3xl p-[18px]">
         <div className="flex flex-col gap-[6px] w-full">
-          <h1 className="font-bold text-2xl">Distribusi Stok Baru</h1>
+          <h1 className="font-bold text-2xl">Tambah Stok</h1>
           <Link to={`/warehouse-products/${id}`}
             className="flex items-center gap-[6px] text-monday-gray font-semibold"
           >
@@ -219,7 +219,7 @@ const DistribusiStokWarehouse = () => {
           </form>
         </div>
         <div className="flex flex-col w-[392px] shrink-0 h-fit rounded-3xl p-[18px] gap-3 bg-white">
-          <p className="font-semibold">Quick Guide to Distribusi Stok</p>
+          <p className="font-semibold">Quick Guide to Tambah Stok</p>
           <ul className="flex flex-col gap-4">
             <li className="flex gap-[6px]">
               <img

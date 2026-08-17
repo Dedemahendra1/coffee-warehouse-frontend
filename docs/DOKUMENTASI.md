@@ -35,7 +35,7 @@
 **Senopati Coffee** adalah aplikasi web berbasis arsitektur *frontend-backend* (monolith terpisah) yang digunakan sebagai sistem internal perusahaan untuk mengelola inventori, distribusi stok, dan transaksi penjualan pada jaringan *coffee shop* Senopati Coffee dengan banyak cabang (outlet). Sistem menangani dua tingkatan manajemen:
 
 1. **Tingkat pusat (Manager)** — mengelola gudang pusat, produk, kategori, outlet (cabang), pengguna, role/permission, distribusi stok dari gudang ke outlet, serta melihat laporan stok dan distribusi.
-2. **Tingkat outlet (Keeper)** — mengelola stok outlet miliknya, menerima distribusi stok dari gudang, mencatat transaksi penjualan, dan melihat riwayat transaksi outlet-nya.
+2. **Tingkat outlet (Keeper)** — mengelola stok outlet miliknya, menerima distribusi stok dari gudang, mencatat stock out, dan melihat laporan stok outlet-nya.
 
 ### 1.2 Arsitektur Sistem
 
@@ -61,24 +61,25 @@ Backend menerapkan pola arsitektur berlapis **Controller → Service → Reposit
 
 ### 1.4 Alur Bisnis End-to-End
 
-Sistem bekerja sebagai rantai aliran stok (inventory chain) dari *supplier* hingga penjualan di outlet:
+Sistem bekerja sebagai rantai aliran stok (inventory chain) dari gudang hingga stock out di outlet:
 
 ```
-Supplier
-  → Barang Masuk Gudang (stok gudang bertambah)
-  → Gudang Pusat
-  → Distribusi ke Outlet (stok gudang berkurang, stok outlet bertambah)
+Produk & Kategori (Manager)
+  → Barang Masuk / Tambah Stok (Keeper)
+  → Stok Gudang
+  → Distribusi ke Outlet (Keeper — stok gudang berkurang, stok outlet bertambah)
   → Stok Outlet
-  → Penjualan di Outlet (Pencatatan Penjualan Outlet)
-  → Stok Outlet Berkurang (otomatis)
-  → Laporan
+  → Stock Out — Pengeluaran Stok (Keeper — stok outlet berkurang)
+  → Laporan (Manager)
 ```
 
 1. **Produk dan kategori** didaftarkan oleh Manager.
-2. **Barang masuk gudang**: stok produk dari *supplier* dimasukkan ke **gudang pusat** melalui fitur *assign* stok gudang (stok gudang bertambah). *Catatan: sistem belum memiliki entitas Supplier; "barang masuk gudang" dimodelkan langsung sebagai penambahan stok gudang.*
-3. **Distribusi**: Manager atau Keeper menyalurkan stok dari gudang ke outlet. Sistem otomatis **mengurangi stok gudang** dan menambah/mencatat stok outlet (menyimpan asal gudang).
-4. **Penjualan (Pencatatan Penjualan Outlet)**: Keeper mencatat penjualan di outlet miliknya. Sistem memeriksa kecukupan **stok outlet**, menghitung subtotal, pajak (10%), dan total, lalu **mengurangi stok outlet** secara otomatis. Transaksi penjualan adalah **proses keluarnya stok dari outlet** akibat penjualan kepada pelanggan (*walk-in customer*) — **bukan** distribusi gudang ke outlet.
-5. **Pelaporan**: Manager dapat melihat ringkasan stok gudang, stok outlet, produk hampir habis, dan riwayat distribusi, serta mengekspornya ke Excel.
+2. **Barang masuk gudang (Tambah Stok)**: stok produk dari *supplier* dimasukkan ke **gudang pusat** melalui fitur *assign* stok gudang (stok gudang bertambah). *Catatan: sistem belum memiliki entitas Supplier; "barang masuk gudang" dimodelkan langsung sebagai penambahan stok gudang.*
+3. **Distribusi**: Keeper menyalurkan stok dari gudang ke outlet miliknya. Sistem otomatis **mengurangi stok gudang** dan menambah/mencatat stok outlet (menyimpan asal gudang).
+4. **Stock Out**: Keeper mencatat pengeluaran stok dari outlet (mis. rusak/kadaluarsa/pemakaian internal). Sistem memeriksa kecukupan **stok outlet**, lalu **mengurangi stok outlet** secara otomatis.
+5. **Pelaporan**: Manager dapat melihat ringkasan stok gudang, stok outlet, produk hampir habis, riwayat distribusi, dan riwayat stock out, serta mengekspornya ke Excel.
+
+> **Catatan:** Modul Transaksi Penjualan (backend: `transactions` + `transaction_products`) tetap tersedia di backend namun **dinonaktifkan dari UI**. Tidak ada menu, dashboard, atau halaman laporan yang menampilkan data transaksi penjualan.
 
 ### 1.5 Teknologi dan Dependensi Utama
 
@@ -170,7 +171,7 @@ Supplier
    DB_USERNAME=root
    DB_PASSWORD=
    ```
-6. **Jalankan migrasi dan seeder** (membuat tabel beserta data demo lengkap: 2 role, 1 manajer + 3 penjaga gudang, 16 kategori, 33 produk, 1 gudang, 3 outlet, 81 baris distribusi, dan 150 transaksi penjualan):
+6. **Jalankan migrasi dan seeder** (membuat tabel beserta data demo lengkap: 2 role, 1 manajer + 3 penjaga gudang, 15 kategori, 33 produk, 1 gudang, 3 outlet, 81 baris distribusi, 54 record stock out, dan 150 transaksi penjualan):
    ```
    php artisan migrate:fresh --seed
    ```
@@ -213,7 +214,7 @@ Seeder menghasilkan seluruh data demo secara otomatis. Kata sandi semua akun ada
 | `keeper2@senopaticoffee.id` | `keeper` | Salsabila Putri |
 | `keeper3@senopaticoffee.id` | `keeper` | Fajar Nugroho |
 
-Selain akun di atas, seeder mengisi 16 kategori, 33 produk, 1 gudang pusat, 3 outlet (Senopati Coffee Grand Wisata, Bekasi Selatan, Galaxy), 81 baris distribusi, dan 150 transaksi penjualan.
+Selain akun di atas, seeder mengisi 15 kategori, 33 produk, 1 gudang pusat, 3 outlet (Senopati Coffee Setia Budi, Medan Johor, Ring Road — seluruhnya di Medan), 81 baris distribusi, 54 record stock out, dan 150 transaksi penjualan.
 
 ---
 
@@ -258,7 +259,8 @@ mondayfedummyui-edited-main/
     │   ├── useAssignRoles.ts         # API penugasan role
     │   ├── useOutlets.ts             # API outlet/merchant (CRUD + my-merchant)
     │   ├── useOutletProducts.ts      # API stok outlet (distribusi stok)
-    │   ├── useWarehouseProducts.ts   # API stok gudang (assign)
+    │   ├── useWarehouseProducts.ts   # API stok gudang (assign + detach)
+    │   ├── useStockOuts.ts           # API stock out (list + create)
     │   └── useTransactions.ts        # API transaksi
     ├── pages/
     │   ├── Login.tsx                 # Halaman masuk
@@ -278,6 +280,7 @@ mondayfedummyui-edited-main/
     │   ├── outlets/                  # CRUD outlet (List/Add/Edit)
     │   ├── outlet_products/          # Stok outlet & distribusi
     │   ├── warehouse_products/       # Stok gudang & assign
+    │   ├── stock_outs/               # Pencatatan & monitoring stock out
     │   ├── transactions/             # Transaksi (List/Add/Details/Success + step)
     │   └── reports/                  # Komponen laporan (hook, tab, ekspor Excel)
     ├── schemas/                      # Skema validasi Zod per modul
@@ -346,7 +349,6 @@ Berdasarkan `src/components/Sidebar.tsx`, menu yang tampil sesuai role:
 | Overview (`/overview`) | ✔ | – |
 | Overview Outlet (`/overview-outlet`) | – | ✔ |
 | Products | ✔ | – |
-| Transactions | – | ✔ |
 | Categories | ✔ | – |
 | Warehouses | ✔ | ✔ |
 | Reports | ✔ | – |
@@ -355,27 +357,38 @@ Berdasarkan `src/components/Sidebar.tsx`, menu yang tampil sesuai role:
 | Roles | ✔ | – |
 | Manage Users → Users List | ✔ | – |
 | Manage Users → Assign Role | ✔ | – |
-| Settings | ✔ | ✔ |
+| Stock Out (`/stock-outs`) | ✔ (lihat semua outlet) | ✔ (hanya outlet sendiri) |
+
+> Menu **Stock Out** tersedia untuk kedua role. Menu "Transactions" dan "Settings" telah dihapus dari sidebar (Transactions dinonaktifkan dari UI; Settings tidak ada halaman terkait).
 
 ### 5.4 Matriks Akses API (Backend Middleware)
 
-Berdasarkan `routes/api.php`:
+Berdasarkan `routes/api.php` (pembagian rute kini dalam tiga kelompok: `role:manager`,
+`role:keeper`, dan `role:manager|keeper`):
 
 | Endpoint | Manager | Keeper |
 |---|:---:|:---:|
-| `GET/POST/PUT/DELETE /users`, `/roles`, `/categories`, `/products`, `/warehouses`, `/merchants`, `/transactions` | ✔ | – |
-| `POST /users/roles` | ✔ | – |
+| CRUD `/users`, `/roles`, `/categories`, `/products`, `/warehouses`, `/merchants` (master data) | ✔ | – |
+| `POST /users/roles` (assign role) | ✔ | – |
+| `DELETE /warehouses/{warehouse}/products/{product}` (lepas dari gudang) | ✔ | – |
+| `GET /transactions` (monitoring semua outlet) | ✔ | – |
 | `GET /categories`, `GET /categories/{id}` | ✔ | ✔ |
 | `GET /products`, `GET /products/{id}` | ✔ | ✔ |
 | `GET /warehouses`, `GET /warehouses/{id}` | ✔ | ✔ |
+| `GET /warehouses/{warehouse}/products` | ✔ | ✔ |
+| `POST/PUT /warehouses/{warehouse}/products(/...)` (stok gudang) | – | ✔ |
+| `POST/PUT/DELETE /merchants/{merchant}/products(/...)` (stok outlet) | – | ✔ |
+| `POST /transactions` (penjualan outlet) | – | ✔ |
+| `GET /transactions/{transaction}` | ✔ (semua) | ✔ (hanya miliknya) |
 | `GET /my-merchant`, `GET /my-merchant/transactions` | ✔ | ✔ |
-| `POST /transactions`, `GET /transactions/{id}` | ✔ | ✔ |
-| `POST/PUT/DELETE /merchants/{id}/products(/...)` (stok outlet) | ✔ | ✔ |
-| `GET/POST/PUT /warehouses/{id}/products(/...)` (stok gudang) | ✔ | ✔ |
+| `GET /stock-outs` | ✔ (semua outlet) | ✔ (hanya outlet sendiri) |
+| `POST /stock-outs` | – | ✔ |
 
 **Pembatasan tambahan (*business rule*):**
-- Keeper hanya dapat mengelola stok/transaksi untuk outlet miliknya sendiri (`MerchantProductController::authorizeKeeper` dan validasi `keeper_id` pada `TransactionService`).
-- Role `manager` diberikan seluruh permission role melalui `RoleSeeder`; middleware `role:manager` dan `role:manager|keeper` diterapkan pada kelompok rute terkait.
+- Keeper hanya dapat mengelola stok/transaksi untuk outlet miliknya sendiri (`MerchantProductController::authorizeKeeper`, `TransactionService`, dan `TransactionController::show` — 403 jika bukan miliknya).
+- Keeper tidak dapat melepas produk dari gudang (`DELETE warehouse product` manager-only) dan tidak dapat mengubah master data.
+- `StockOutService` memvalidasi kepemilikan outlet keeper dan mencegah stok negatif dalam satu transaksi database.
+- Role `manager` diberikan seluruh permission role melalui `RoleSeeder`; middleware `role:manager` dan `role:keeper` diterapkan pada kelompok rute terkait.
 
 ---
 
@@ -402,51 +415,54 @@ Berdasarkan `routes/api.php`:
 - Daftar, tambah, ubah, dan hapus gudang (nama, alamat, foto, telepon).
 - Halaman: `WarehouseList`, `AddWarehouse`, `EditWarehouse`.
 
-### 6.5 Manajemen Stok Gudang (Manager & Keeper)
-- **Assign produk** ke gudang beserta jumlah stok (`POST /warehouses/{id}/products`).
-- **Ubah stok** produk pada gudang (`PUT /warehouses/{id}/products/{product}`).
-- **Lepas produk** dari gudang (`DELETE /warehouses/{id}/products/{product}`).
-- Halaman: `WarehouseProductList`, `DistribusiStok` (assign), `EditWarehouseProduct`.
+### 6.5 Manajemen Stok Gudang (Keeper — operasional; Manager — view & lepas produk)
+- **Keeper** menambah/ubah stok gudang: assign produk (`POST /warehouses/{id}/products`) dan ubah stok (`PUT /warehouses/{id}/products/{product}`).
+- **Manager** hanya melihat detail stok gudang dan mengelola master gudang (tambah/ubah/hapus gudang); **lepas produk** dari gudang (`DELETE /warehouses/{id}/products/{product}`) khusus Manager.
+- Halaman: `WarehouseProductList`, `DistribusiStok` (assign — bertajuk "Tambah Stok"), `EditWarehouseProduct`.
+- Pada `WarehouseProductList`, Keeper melihat tombol **Tambah Stok** dan **Transfer Stok** (bukan Edit/Remove); Manager melihat **Edit Warehouse** dan **Remove** (lepas produk).
 
 ### 6.6 Manajemen Outlet (Manager)
 - Daftar, tambah, ubah, dan hapus outlet/merchant.
 - Setiap outlet terikat pada satu *keeper* (`keeper_id`).
 - Halaman: `OutletList`, `AddOutlet`, `EditOutlet`.
 
-### 6.7 Distribusi Stok Gudang ke Outlet (Manager & Keeper)
-- Menetapkan produk ke outlet beserta jumlah dan **asal gudang** (`POST /merchants/{id}/products`).
+### 6.7 Distribusi Stok Gudang ke Outlet (Keeper)
+- **Keeper** menetapkan produk ke outlet miliknya beserta jumlah dan **asal gudang** (`POST /merchants/{id}/products`); **Manager** tidak dapat melakukan distribusi (hanya melihat).
 - Sistem memeriksa kecukupan stok gudang, lalu **mengurangi stok gudang**.
 - Mengubah stok outlet (jika naik → kurangi stok gudang asal; jika turun → kembalikan ke gudang asal).
-- Melepas produk dari outlet.
+- Melepas produk dari outlet (khusus Keeper untuk outlet miliknya).
 - Halaman: `OutletProductList`, `DistribusiStok`, `EditDistribusiStok`.
 
-### 6.8 Transaksi Penjualan (Keeper) — Pencatatan Penjualan Outlet
+### 6.8 Transaksi Penjualan (Dinonaktifkan dari UI — Backend Tetap Aktif)
+
+> **Status: Dinonaktifkan dari UI.** Rute `/transactions`, menu sidebar Transactions, serta kartu Revenue/Transaksi pada Dashboard telah dihapus. Backend (`POST /transactions`, `GET /transactions`) tetap berfungsi dan dapat diakses via API langsung, tetapi tidak ditampilkan pada antarmuka pengguna.
 
 - **Bukan sistem POS penuh**; modul ini berfungsi sebagai **pencatatan penjualan outlet** yang menyebabkan **stok outlet berkurang otomatis** setelah penjualan.
-- **Keeper** hanya dapat membuat transaksi untuk **outlet yang menjadi tanggung jawabnya** (`merchant.keeper_id`); diverifikasi di `TransactionService::createTransaction`.
-- **Manager** hanya dapat **melihat seluruh transaksi** (tidak mencatat transaksi untuk outlet).
-- Setiap transaksi dapat berisi **lebih dari satu produk** (multi-produk, `products[]`).
-- **Validasi stok outlet sebelum transaksi disimpan**: jika stok tidak mencukupi, transaksi **dibatalkan** dan sistem mengembalikan pesan error yang jelas (mis. `Insufficient stock for product ID: ...`). Frontend juga membatasi kuantitas maksimal sesuai stok outlet.
-- Setelah transaksi berhasil: **stok outlet otomatis berkurang**, `sub_total`, `tax_total` (10%), dan `grand_total` **dihitung otomatis** di server (klien hanya menampilkan pra-kalkulasi).
-- **Customer bukan entitas/aktor/role/modul**: pembeli diperlakukan sebagai *walk-in customer*; `name` & `phone` dicatat sebagai teks bebas pada transaksi (bukan data master, tidak ada CRUD customer).
-- Alur 3 langkah: **data pembeli** → **pilih produk dari stok outlet** → **ringkasan & simpan**.
-- Halaman: `TransactionList`, `AddTransaction` (+ `StepOne/StepTwo/StepThree`, `ProductModal`), `TransactionDetails`, `TransactionSuccess`.
+- Backend tersedia untuk integrasi masa depan (mis. POS tablet atau mobile app).
 
-### 6.9 Manajemen Pengguna (Manager)
+### 6.9 Pencatatan Stock Out (Pengeluaran Stok Outlet — Keeper; Monitoring — Manager)
+- **Stock out** adalah pengeluaran stok dari outlet (mis. rusak/kadaluarsa/pemakaian internal) yang **mengurangi stok outlet** tanpa melalui transaksi penjualan.
+- **Keeper** mencatat stock out hanya untuk outlet miliknya (`POST /stock-outs`) dengan memilih produk dari `my-merchant` dan jumlah yang tidak melebihi stok tersedia.
+- **Manager** melihat seluruh stock out semua outlet (kolom outlet ditampilkan); Keeper hanya melihat outlet sendiri.
+- Sistem menjalankan validasi stok dan pengurangan stok outlet dalam satu transaksi database (stok tidak pernah negatif).
+- Halaman: `StockOutList` (`/stock-outs`); modal "Tambah Stock Out" tersedia untuk Keeper.
+- Contoh payload: `{ "merchant_id": 1, "product_id": 12, "quantity": 3, "reason": "Kemasan rusak" }`.
+
+### 6.10 Manajemen Pengguna (Manager)
 - CRUD pengguna (nama, email, telepon, foto, kata sandi).
 - **Penugasan role** ke pengguna (`POST /users/roles`).
 - Halaman: `UserList`, `AddUser`, `EditUser`, `AssignUserRoles`.
 
-### 6.10 Manajemen Role (Manager)
+### 6.11 Manajemen Role (Manager)
 - CRUD role (nama).
 - Halaman: `RoleList`, `AddRole`, `EditRole`.
 
-### 6.11 Dashboard
-- **Manager** (`Overview`): ringkasan operasional pusat.
-- **Keeper** (`OverviewOutlet`): ringkasan operasional outlet.
+### 6.12 Dashboard
+- **Manager** (`Overview`): ringkasan operasional pusat — Total Gudang, Total Outlet, Total Stok Gudang, Total Stok Outlet, Stok Hampir Habis (gudang + outlet).
+- **Keeper** (`OverviewOutlet`): ringkasan operasional outlet — Total Gudang, Total Stok Outlet, Stok Hampir Habis, Total Produk Outlet, Stock Out Hari Ini.
 
-### 6.12 Laporan Stok & Distribusi (Manager)
-Halaman `Reports` dengan empat tab dan fitur pencarian/filter/paginasi:
+### 6.13 Laporan Stok & Distribusi (Manager)
+Halaman `Reports` dengan lima tab dan fitur pencarian/filter/paginasi:
 
 | Tab | Isi |
 |---|---|
@@ -454,6 +470,7 @@ Halaman `Reports` dengan empat tab dan fitur pencarian/filter/paginasi:
 | **Stok Gudang** | Kartu per gudang lengkap dengan daftar produk & stok |
 | **Stok Outlet** | Kartu per outlet lengkap dengan daftar produk & stok |
 | **Riwayat Distribusi** | Baris distribusi (tanggal, gudang asal, outlet tujuan, produk, jumlah, petugas) dengan filter rentang tanggal, gudang, dan outlet |
+| **Riwayat Stock Out** | Baris stock out (tanggal, outlet, produk, jumlah, keterangan) dengan filter rentang tanggal dan outlet |
 
 Kartu ringkasan: **Total Stok Gudang**, **Total Stok Outlet**, **Total Terdistribusi**, **Produk Hampir Habis**.
 Aksi: **Ekspor ke Excel** (ExcelJS) dan **Cetak** (print).
@@ -462,15 +479,16 @@ Aksi: **Ekspor ke Excel** (ExcelJS) dan **Cetak** (print).
 
 | Kebutuhan Laporan | Status |
 |---|---|
-| Riwayat Penjualan | Belum ada tab khusus di `Reports`; riwayat penjualan outlet tersedia di `TransactionList` (Keeper) dan daftar transaksi terbaru di `Overview` (Manager) |
-| Total Penjualan | Terlihat di `Overview` (Manager) sebagai *Total Revenue*; belum menjadi bagian dari halaman `Reports` |
+| Riwayat Penjualan | Dinonaktifkan dari UI (backend tersedia via API) |
+| Total Penjualan | Dinonaktifkan dari UI (backend tersedia via API) |
 | Produk Terlaris | Belum tersedia (tidak ada perhitungan analitik penjualan; hanya flag pemasaran `is_popular` pada produk) |
 | Riwayat Distribusi | Tersedia (tab "Riwayat Distribusi") |
+| Riwayat Stock Out | Tersedia (tab "Riwayat Stock Out") |
 | Stok Gudang | Tersedia (tab "Stok Gudang") |
 | Stok Outlet | Tersedia (tab "Stok Outlet") |
 | Produk Hampir Habis | Tersedia (tab "Stok Hampir Habis", stok ≤ 5) |
 
-> Catatan konsep: tab **"Riwayat Distribusi"** saat ini diturunkan dari data **transaksi penjualan** (`transaction_products`), bukan dari log distribusi gudang→outlet. Hal ini tercatat sebagai temuan di Bab 16.
+> Catatan konsep: tab **"Riwayat Distribusi"** saat ini diturunkan dari data transaksi di sisi klien, bukan dari log distribusi gudang→outlet. Hal ini tercatat sebagai temuan di Bab 16.
 
 ---
 
@@ -497,8 +515,8 @@ rectangle "Senopati Coffee — Manajemen Inventori & Distribusi" {
   usecase "Kelola Outlet" as UC8
   usecase "Distribusi Stok ke Outlet" as UC9
   usecase "Kelola Stok Outlet" as UC10
-  usecase "Mencatat Transaksi Penjualan" as UC11
-  usecase "Melihat Riwayat Transaksi" as UC12
+  usecase "Mencatat Stock Out" as UC11
+  usecase "Melihat Riwayat Stock Out" as UC12
   usecase "Melihat Laporan Stok & Distribusi" as UC13
   usecase "Kelola Pengguna" as UC14
   usecase "Menetapkan Role ke Pengguna" as UC15
@@ -519,7 +537,6 @@ rectangle "Senopati Coffee — Manajemen Inventori & Distribusi" {
   M --> UC7
   K --> UC7
   M --> UC8
-  M --> UC9
   K --> UC9
   M --> UC10
   K --> UC10
@@ -532,8 +549,13 @@ rectangle "Senopati Coffee — Manajemen Inventori & Distribusi" {
   M --> UC16
 }
 
+note bottom of UC9
+  Keeper hanya dapat mendistribusikan
+  stok ke outlet miliknya (keeper_id)
+end note
+
 note bottom of UC11
-  Keeper hanya dapat mencatat transaksi
+  Keeper hanya dapat mencatat stock out
   untuk outlet miliknya (keeper_id)
 end note
 @enduml
@@ -541,9 +563,9 @@ end note
 
 **Penjelasan:**
 
-> **Aktor sistem hanya dua: Manager dan Keeper.** Tidak ada aktor **Customer** — pelanggan tidak berinteraksi langsung dengan sistem; ia adalah *walk-in customer* yang datanya hanya dicatat sebagai teks bebas (`name`, `phone`) di dalam transaksi penjualan.
+> **Aktor sistem hanya dua: Manager dan Keeper.** Tidak ada aktor **Customer** — pelanggan tidak berinteraksi langsung dengan sistem.
 
-> **Keeper mencatat transaksi penjualan pada outlet miliknya.** Use case *Mencatat Transaksi Penjualan* (UC11) merepresentasikan pencatatan penjualan outlet yang **mengurangi stok outlet** secara otomatis — berbeda dari *Distribusi Stok ke Outlet* (UC9) yang **menambah stok outlet** dari gudang.
+> **Modul Transaksi Penjualan dinonaktifkan dari UI.** Backend transaksi (`transactions`) tetap tersedia untuk integrasi masa depan, tetapi tidak ada menu, dashboard, atau laporan yang menampilkan data transaksi. Use case yang terkait transaksi digantikan oleh **Mencatat Stock Out** (UC11) dan **Melihat Riwayat Stock Out** (UC12).
 
 | Kode | Use Case | Aktor | Deskripsi Singkat |
 |---|---|---|---|
@@ -553,12 +575,12 @@ end note
 | UC4 | Kelola Kategori | M | CRUD kategori |
 | UC5 | Kelola Produk | M | CRUD produk |
 | UC6 | Kelola Gudang | M | CRUD gudang |
-| UC7 | Kelola Stok Gudang | M, K | Assign/ubah/lepas stok gudang |
+| UC7 | Kelola Stok Gudang | M, K | View (M) / Assign/Ubah/Detach (K) stok gudang |
 | UC8 | Kelola Outlet | M | CRUD outlet |
-| UC9 | Distribusi Stok ke Outlet | M, K | Menyalurkan stok gudang ke outlet |
-| UC10 | Kelola Stok Outlet | M, K | Ubah/lepas stok outlet |
-| UC11 | Mencatat Transaksi Penjualan | K | Catat penjualan outlet (multi-produk); mengurangi stok outlet otomatis |
-| UC12 | Melihat Riwayat Transaksi | M, K | Melihat data transaksi |
+| UC9 | Distribusi Stok ke Outlet | K | Menyalurkan stok gudang ke outlet milik sendiri |
+| UC10 | Kelola Stok Outlet | M, K | View (M) / Ubah/Detach (K) stok outlet |
+| UC11 | Mencatat Stock Out | K | Catat pengeluaran stok outlet (rusak/kadaluarsa/pemakaian internal) |
+| UC12 | Melihat Riwayat Stock Out | M, K | Melihat data stock out |
 | UC13 | Melihat Laporan | M | Laporan stok & distribusi |
 | UC14 | Kelola Pengguna | M | CRUD pengguna |
 | UC15 | Menetapkan Role | M | Assign role ke pengguna |
@@ -625,7 +647,9 @@ stop
 @enduml
 ```
 
-### 8.3 Activity Diagram — Mencatat Transaksi Penjualan (Keeper)
+### 8.3 Activity Diagram — Mencatat Transaksi Penjualan (Dinonaktifkan dari UI)
+
+> **Catatan:** Activity diagram ini menggambarkan alur backend transaksi yang tetap berfungsi, tetapi modul ini **tidak lagi ditampilkan di UI**.
 
 ```plantuml
 @startuml
@@ -667,15 +691,17 @@ stop
 @startuml
 start
 :Manager membuka menu Reports;
-:Muat data gudang, outlet, dan transaksi;
+:Muat data gudang, outlet, dan stock out;
 if (Pilih tab?) then (Stok Hampir Habis)
   :Tampilkan produk dengan stok <= 5 (gudang & outlet);
 elseif (Stok Gudang) then
   :Tampilkan kartu gudang + daftar produk;
 elseif (Stok Outlet) then
   :Tampilkan kartu outlet + daftar produk;
-else (Riwayat Distribusi)
+elseif (Riwayat Distribusi) then
   :Tampilkan baris distribusi;
+elseif (Riwayat Stock Out) then
+  :Tampilkan baris stock out;
 endif
 if (Ingin menyaring?) then (ya)
   :Terapkan pencarian/filter tanggal-gudang-outlet;
@@ -1404,27 +1430,36 @@ usr ||--o{ mhp : model_has_permissions
 | Method | URI | Akses | Deskripsi |
 |---|---|---|---|
 | GET | `/warehouses/{id}/products` | Manager, Keeper | Produk beserta stok pada gudang |
-| POST | `/warehouses/{id}/products` | Manager, Keeper | Attach produk — `product_id`, `stock` (min 1) |
-| PUT | `/warehouses/{id}/products/{product}` | Manager, Keeper | Ubah stok — `stock` |
+| POST | `/warehouses/{id}/products` | Keeper | Attach produk — `product_id`, `stock` (min 1) |
+| PUT | `/warehouses/{id}/products/{product}` | Keeper | Ubah stok — `stock` |
 | DELETE | `/warehouses/{id}/products/{product}` | Manager | Detach produk |
 
 ### 13.9 Stok Outlet / Distribusi (Merchant Product)
 
 | Method | URI | Akses | Deskripsi |
 |---|---|---|---|
-| POST | `/merchants/{id}/products` | Manager, Keeper | Distribusi: `product_id`, `warehouse_id`, `stock`. Cek stok gudang, kurangi gudang, simpan stok outlet |
-| PUT | `/merchants/{id}/products/{product}` | Manager, Keeper | Ubah stok outlet — `stock`, `warehouse_id`. Penyesuaian otomatis stok gudang |
-| DELETE | `/merchants/{id}/products/{product}` | Manager, Keeper | Lepas produk dari outlet |
+| POST | `/merchants/{id}/products` | Keeper | Distribusi: `product_id`, `warehouse_id`, `stock`. Cek stok gudang, kurangi gudang, simpan stok outlet |
+| PUT | `/merchants/{id}/products/{product}` | Keeper | Ubah stok outlet — `stock`, `warehouse_id`. Penyesuaian otomatis stok gudang |
+| DELETE | `/merchants/{id}/products/{product}` | Keeper | Lepas produk dari outlet |
 
-> Keeper hanya diizinkan mengelola outlet miliknya sendiri (validasi `keeper_id`).
+> Keeper hanya diizinkan mengelola outlet miliknya sendiri (validasi `keeper_id` di `MerchantProductController::authorizeKeeper`).
 
-### 13.10 Transaksi
+### 13.10 Stock Out (Pengeluaran Stok Outlet)
+
+| Method | URI | Akses | Deskripsi |
+|---|---|---|---|
+| GET | `/stock-outs` | Manager (semua), Keeper (hanya outlet sendiri) | Daftar stock out; Keeper di-scope otomatis ke merchant miliknya |
+| POST | `/stock-outs` | Keeper | Catat stock out — `merchant_id`, `product_id`, `quantity` (min 1), `reason` (opsional). Kurangi stok outlet; validasi stok cukup (tidak negatif) dalam satu transaksi DB |
+
+> Implementasi: `StockOutController`, `StockOutService`, `StockOutRepository`, `StockOutResource`, tabel `stock_outs` (soft delete).
+
+### 13.11 Transaksi
 
 | Method | URI | Akses | Deskripsi |
 |---|---|---|---|
 | GET | `/transactions` | Manager | Semua transaksi |
-| POST | `/transactions` | Manager, Keeper (rute) — efektif Keeper pemilik outlet | Catat penjualan — `name`, `phone`, `merchant_id`, `products[]` (`product_id`, `quantity`); layanan membatasi ke `merchant.keeper_id` pengguna |
-| GET | `/transactions/{id}` | Manager, Keeper | Detail transaksi |
+| POST | `/transactions` | Keeper (pemilik outlet) | Catat penjualan — `name`, `phone`, `merchant_id`, `products[]` (`product_id`, `quantity`); layanan membatasi ke `merchant.keeper_id` pengguna |
+| GET | `/transactions/{id}` | Manager (semua), Keeper (hanya miliknya, selain itu 403) | Detail transaksi |
 | PUT | `/transactions/{id}` | Manager | (terdaftar via apiResource) |
 | DELETE | `/transactions/{id}` | Manager | (terdaftar via apiResource) |
 | GET | `/my-merchant/transactions` | Manager, Keeper | Transaksi outlet milik pengguna |
@@ -1454,7 +1489,7 @@ usr ||--o{ mhp : model_has_permissions
 - **Validasi:** stok outlet dicek untuk tiap produk sebelum transaksi disimpan; jika stok tidak mencukupi → error 422 `Insufficient stock for product ID: ...` dan **transaksi dibatalkan** (tidak ada transaksi maupun stok yang berubah).
 - Stok setiap produk pada `merchant_products` dikurangi sebesar kuantitas (stok outlet berkurang otomatis).
 
-### 13.11 Pengguna
+### 13.12 Pengguna
 
 | Method | URI | Akses | Deskripsi |
 |---|---|---|---|
@@ -1464,7 +1499,7 @@ usr ||--o{ mhp : model_has_permissions
 | PUT | `/users/{id}` | Manager | Ubah pengguna |
 | DELETE | `/users/{id}` | Manager | Hapus pengguna |
 
-### 13.12 Role & Penugasan Role
+### 13.13 Role & Penugasan Role
 
 | Method | URI | Akses | Deskripsi |
 |---|---|---|---|
@@ -1513,21 +1548,19 @@ Pilih Outlet → halaman Stok Outlet (/outlet-products/:id)
   → Perubahan stok gudang/outlet terlihat di laporan
 ```
 
-### 14.4 Alur Transaksi Penjualan (Keeper)
+### 14.4 Alur Stock Out (Keeper)
 
-Transaksi penjualan adalah **pencatatan penjualan outlet** yang mengeluarkan stok dari outlet kepada pembeli (*walk-in customer*):
+Stock Out adalah **pengeluaran stok dari outlet** (mis. rusak/kadaluarsa/pemakaian internal) yang mengurangi stok outlet tanpa melalui transaksi penjualan:
 
 ```
-Login (keeper) → Overview Outlet → Transactions → Tambah Transaksi
-  → Langkah 1: nama & telepon pembeli (walk-in, bukan data master customer)
-  → Langkah 2: pilih produk dari stok outlet (keranjang), kuantitas ≤ stok
-  → Langkah 3: ringkasan & simpan
-  → POST /transactions
-      ├─ Validasi: outlet milik keeper (keeper_id), stok outlet cukup
-      ├─ Hitung sub_total / tax_total (10%) / grand_total
-      ├─ Simpan transactions + transaction_products
-      └─ Kurangi stok di merchant_products (stok outlet berkurang otomatis)
-  → Halaman sukses
+Keeper login → Overview Outlet → Stock Out → Tambah Stock Out
+  → Pilih produk dari stok outlet
+  → Input jumlah (≤ stok tersedia) & keterangan
+  → POST /stock-outs
+      ├─ Validasi: outlet milik keeper (merchant_id), stok outlet cukup
+      ├─ Kurangi stok di merchant_products
+      └─ Simpan record stock_outs
+  → Kembali ke daftar Stock Out
 ```
 
 ### 14.5 Alur Pelaporan (Manager)
@@ -1535,8 +1568,8 @@ Login (keeper) → Overview Outlet → Transactions → Tambah Transaksi
 ```
 Login (manager) → Reports
   → Hook useReportsData menggabungkan data
-     gudang (/warehouses), outlet (/merchants), transaksi (/transactions)
-  → Tab: Stok Hampir Habis / Stok Gudang / Stok Outlet / Riwayat Distribusi
+     gudang (/warehouses), outlet (/merchants), stock out (/stock-outs)
+  → Tab: Stok Hampir Habis / Stok Gudang / Stok Outlet / Riwayat Distribusi / Riwayat Stock Out
   → Filter pencarian, rentang tanggal, gudang, outlet
   → Ekspor Excel (ExcelJS) atau Cetak
 ```
@@ -1633,15 +1666,18 @@ Bagian ini memuat temuan dari analisis *source code* yang **bukan asumsi** melai
 - Seluruh tabel aplikasi utama memakai `SoftDeletes`. Data yang "dihapus" tetap tersimpan dengan kolom `deleted_at` terisi.
 - Konsekuensi: nilai unik (mis. nama produk/outlet) yang sudah di-*soft delete* akan tetap memblokir pembuatan data dengan nama yang sama karena constraint unik tetap berlaku.
 
-### 16.9 Bug Potensial pada `WarehouseProductController`
+### 16.9 Rute Stok Gudang, Stok Outlet & Stock Out (sudah diperjelas)
 
-- Kelompok rute `auth:sanctum, role:manager|keeper` mendaftarkan `POST /warehouses/{warehouse}/products` sebagai *attach*, sedangkan kelompok `role:manager` juga mendaftarkan rute yang sama. Konflik ini berpotensi mengarahkan permintaan ke salah satu handler tergantung urutan registrasi rute (handler `attach` yang sama).
-- Fungsi `detach` hanya terdaftar untuk role manager; keeper tidak dapat melepas produk dari gudang (sesuai desain).
+- Kelompok rute kini dibagi tiga: `role:manager`, `role:keeper`, dan `role:manager|keeper` (lihat Bab 5.4).
+- **Stok gudang** (attach/update) dan **stok outlet** (distribusi/transfer) hanya untuk `keeper`; **detach produk dari gudang** hanya untuk `manager` — tidak ada lagi duplikasi rute yang ambigu.
+- **Stock Out** (`/stock-outs`) tersedia untuk kedua role: Manager melihat semua outlet, Keeper hanya outlet sendiri. Membuat stock out hanya untuk `keeper`.
+- `WarehouseProductController::show()` ditambahkan sehingga `GET /warehouses/{warehouse}/products` mengembalikan detail stok gudang bagi kedua role.
 
 ### 16.10 Fitur Ekspor dan Laporan
 
 - Ekspor Excel (`src/pages/reports/exportExcel.ts`) menggunakan **ExcelJS** di sisi klien — tidak ada endpoint ekspor di backend.
-- Laporan dihitung sepenuhnya di sisi klien berdasarkan data mentah dari `GET /warehouses`, `GET /merchants`, dan `GET /transactions`.
+- Laporan dihitung sepenuhnya di sisi klien berdasarkan data mentah dari `GET /warehouses`, `GET /merchants`, dan `GET /stock-outs`.
+- Modul Transaksi Penjualan (`transactions`) **dinonaktifkan dari UI**; data transaksi tidak digunakan dalam laporan.
 
 ### 16.11 Validasi dan Pengurangan Stok Tidak Atomik (Risiko Overselling)
 
@@ -1650,28 +1686,32 @@ Bagian ini memuat temuan dari analisis *source code* yang **bukan asumsi** melai
 - **Dampak:** dua penjualan bersamaan untuk produk yang sama dapat lolos validasi dan menyebabkan stok negatif (overselling).
 - **Saran (untuk penyempurnaan berikutnya):** gunakan kueri atomik seperti `decrement('stock', qty)` atau `lockForUpdate()` pada baris `merchant_products` di dalam transaksi.
 
-### 16.12 Seeder Transaksi Tidak Mengurangi Stok Outlet
+### 16.12 Konsistensi Seeder dengan Stok Outlet (sudah diperbaiki)
 
-- `DummyDataSeeder::createTransactions()` menyisipkan 50 transaksi namun **tidak pernah mengurangi** `merchant_products.stock`.
-- **Dampak:** riwayat penjualan hasil seeder tidak selaras dengan level stok outlet; total stok outlet yang tampil di laporan tidak memperhitungkan penjualan tersebut.
+- Temuan sebelumnya: seeder transaksi tidak mengurangi `merchant_products.stock`, sehingga riwayat penjualan tidak selaras dengan stok outlet.
+- **Status: diperbaiki** — `SalesTransactionSeeder` kini mengurangi stok outlet sesuai kuantitas terjual, `StockOutSeeder` mengurangi stok outlet sesuai stock out, dan proses diakhiri dengan *assert* (stok akhir gudang/outlet sama dengan target `SenopatiSeedData`, tidak ada stok negatif). Jika assert gagal, seeder melempar `RuntimeException`.
 
-### 16.13 `GET /transactions/{id}` Tanpa Pemeriksaan Kepemilikan Outlet
+### 16.13 `GET /transactions/{id}` — Pemeriksaan Kepemilikan (telah diperbaiki)
 
-- Rute `GET /transactions/{transaction}` tersedia untuk `manager|keeper`, namun `TransactionController::show()` **tidak memverifikasi** bahwa transaksi milik outlet si Keeper.
-- **Dampak:** seorang Keeper dapat membaca detail transaksi outlet lain dengan menebak ID.
-- **Saran:** terapkan pemeriksaan `auth()->user()->merchant->id === $transaction->merchant_id` di `show()`.
+- Temuan sebelumnya: `TransactionController::show()` tidak memverifikasi kepemilikan outlet bagi Keeper, sehingga Keeper dapat membaca detail transaksi outlet lain dengan menebak ID.
+- **Status: diperbaiki** — `show()` kini memeriksa role keeper dan membatasi ke `merchant_id` miliknya (selain itu → 403). Terverifikasi lewat test `tests/Feature/RoleAccessTest.php`.
 
-### 16.14 Tab "Riwayat Distribusi" Diturunkan dari Transaksi Penjualan
+### 16.14 Tab "Riwayat Distribusi" Diturunkan dari Data Transaksi
 
-- Di laporan (`useReportsData`), baris "Riwayat Distribusi" dibangun dari `transaction_products` (data **penjualan**), bukan dari log distribusi gudang→outlet.
-- Karena skema data tidak menyimpan *event log* distribusi, riwayat distribusi yang sesungguhnya tidak dapat diperoleh langsung.
-- **Catatan konsep:** distribusi (gudang→outlet) **menambah** stok outlet; penjualan **mengurangi** stok outlet. Keduanya adalah alur berbeda dan tidak boleh dicampur. Untuk laporan yang benar, disarankan menambahkan tabel log distribusi pada pengembangan berikutnya.
+- Di laporan (`useReportsData`), baris "Riwayat Distribusi" saat ini dibangun dari data mentah outlet (products + warehouse_id).
+- Modul Transaksi Penjualan telah dinonaktifkan dari UI; tab "Riwayat Distribusi" tetap tersedia tetapi datanya diturunkan dari data distribusi yang tersimpan di pivot `merchant_products`.
+- **Catatan konsep:** distribusi (gudang→outlet) **menambah** stok outlet; stock out **mengurangi** stok outlet. Keduanya adalah alur berbeda. Untuk laporan yang benar, disarankan menambahkan tabel log distribusi pada pengembangan berikutnya.
 
-### 16.15 Laporan Belum Mencakup Riwayat Penjualan / Total Penjualan / Produk Terlaris
+### 16.15 Transaksi Penjualan Dinonaktifkan dari UI
 
-- Halaman `Reports` belum memiliki tab **Riwayat Penjualan**, **Total Penjualan**, atau **Produk Terlaris**.
-- Data penjualan saat ini hanya tampil di `Overview` (Total Revenue, transaksi terbaru) dan daftar transaksi Keeper (`TransactionList`).
-- **Saran:** tambahkan tab riwayat penjualan beserta ringkasan total penjualan dan peringkat produk terlaris pada halaman laporan.
+- Modul Transaksi Penjualan (`transactions`) telah **dinonaktifkan dari UI**:
+  - Menu Sidebar "Transactions" (keeper) dihapus
+  - Rute `/transactions`, `/transactions/add`, `/transactions/details/:id`, `/transactions/success` dihapus dari `App.tsx`
+  - Kartu Total Revenue dan Total Transaksi dihapus dari Dashboard Manager
+  - Kartu Distribusi Hari Ini (berbasis transaksi) dihapus dari Dashboard Keeper
+  - Data transaksi tidak lagi ditampilkan di halaman laporan
+- **Backend tetap aktif**: endpoint `GET /transactions`, `POST /transactions`, `GET /transactions/{id}` berfungsi normal dan diuji oleh `RoleAccessTest`. Modul ini tersedia untuk integrasi masa depan (mis. POS tablet atau mobile app).
+- **Alasannya**: fokus sistem adalah inventori & distribusi (BWA — Bisa Wirausaha), bukan POS. Transaksi penjualan bukan bagian dari alur utama BWA.
 
 ### 16.16 Konsep Supplier Belum Ada di Sistem
 
@@ -1687,11 +1727,12 @@ Bagian ini memuat temuan dari analisis *source code* yang **bukan asumsi** melai
 | Aspek | Berkas Rujukan |
 |---|---|
 | Rute API | `backend/routes/api.php` |
-| Model | `backend/app/Models/*.php` |
-| Migrasi | `backend/database/migrations/*.php` |
-| Seeder | `backend/database/seeders/{DatabaseSeeder,UserRoleSeeder,DummyDataSeeder}.php` |
-| Controller | `backend/app/Http/Controllers/*.php` |
-| Service/Business Logic | `backend/app/Services/{TransactionService,MerchantProductService,AuthService}.php` |
+| Model | `backend/app/Models/*.php` (termasuk `StockOut`) |
+| Migrasi | `backend/database/migrations/*.php` (termasuk `..._create_stock_outs_table.php`) |
+| Seeder | `backend/database/seeders/{DatabaseSeeder,SenopatiSeedData,StockOutSeeder,..}.php` |
+| Controller | `backend/app/Http/Controllers/*.php` (termasuk `StockOutController`) |
+| Service/Business Logic | `backend/app/Services/{TransactionService,MerchantProductService,StockOutService,AuthService}.php` |
+| Otorisasi Role | `backend/tests/Feature/RoleAccessTest.php` |
 | Validasi Request | `backend/app/Http/Requests/*.php` |
 | Resource JSON | `backend/app/Http/Resources/*.php` |
 | Konfigurasi CORS | `backend/config/cors.php` |
@@ -1710,6 +1751,6 @@ Bagian ini memuat temuan dari analisis *source code* yang **bukan asumsi** melai
 Dokumen ini disusun hanya berdasarkan *source code*. Informasi berikut **tidak tersedia** dan tidak dikarang dalam dokumen:
 
 1. Dokumentasi resmi arsitektur dari tim pengembang.
-2. Hasil pengujian (unit test/integration test) — tidak ditemukan berkas pengujian khusus selain test template Laravel.
+2. Hasil pengujian — test otorisasi role tersedia di `backend/tests/Feature/RoleAccessTest.php` (14 kasus, database test terpisah `gudang-backend-test`); belum ada test untuk seluruh modul.
 3. Data sensitif produksi (kredensial nyata, konfigurasi server produksi).
 4. Spesifikasi hardware/server produksi.

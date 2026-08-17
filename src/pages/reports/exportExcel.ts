@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
-import type { LowStockProduct, DistributionRow } from "./useReportsData";
+import type { LowStockProduct, DistributionRow, StockOutRow } from "./useReportsData";
+import type { Product } from "../../types/product";
 
 const HEADER_FILL_COLOR = "0A3A89";
 const HEADER_FONT_COLOR = "FFFFFF";
@@ -304,4 +305,128 @@ export async function exportDistributionToExcel(distributionRows: DistributionRo
 
   const today = getTodayString();
   await downloadWorkbook(workbook, `laporan-distribusi-${today}.xlsx`);
+}
+
+export async function exportStockOutToExcel(stockOutRows: StockOutRow[]) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Senopati Coffee";
+  workbook.created = new Date();
+
+  const worksheet = workbook.addWorksheet("Riwayat Stock Out");
+
+  const headers = ["No", "Tanggal", "Outlet", "Produk", "Jumlah", "Keterangan"];
+
+  addTitleBlock(worksheet, "Laporan Riwayat Stock Out", stockOutRows.length, 6);
+
+  const headerRowNumber = 4;
+  const headerRow = worksheet.addRow(headers);
+  applyHeaderStyle(headerRow, 6);
+
+  stockOutRows.forEach((row, index) => {
+    const rowData = [
+      index + 1,
+      formatDateIndonesian(row.date),
+      row.outlet,
+      row.product,
+      row.unit
+        ? `${row.quantity} ${row.unit}`
+        : row.quantity,
+      row.reason,
+    ];
+    const dataRow = worksheet.addRow(rowData);
+    const rowIndex = index + 1;
+
+    dataRow.font = { size: 10 };
+    dataRow.alignment = { vertical: "middle" };
+
+    dataRow.getCell(1).alignment = { horizontal: "center", vertical: "middle" };
+    dataRow.getCell(2).alignment = { horizontal: "left", vertical: "middle" };
+    dataRow.getCell(3).alignment = { horizontal: "left", vertical: "middle" };
+    dataRow.getCell(4).alignment = { horizontal: "left", vertical: "middle" };
+
+    const quantityCell = dataRow.getCell(5);
+    quantityCell.alignment = { horizontal: "right", vertical: "middle" };
+    quantityCell.font = { bold: true, size: 10, color: { argb: "DC2626" } };
+
+    dataRow.getCell(6).alignment = { horizontal: "left", vertical: "middle" };
+
+    applyZebraStripe(dataRow, rowIndex, 6);
+    dataRow.height = 24;
+  });
+
+  const lastDataRowNumber = headerRowNumber + stockOutRows.length;
+
+  applyBorderToRange(worksheet, headerRowNumber, lastDataRowNumber, 1, 6);
+  setColumnWidthsBasedOnData(worksheet, headerRowNumber, lastDataRowNumber, 6);
+  setupFreezeAndFilter(worksheet, headerRowNumber, 6);
+
+  const today = getTodayString();
+  await downloadWorkbook(workbook, `laporan-stock-out-${today}.xlsx`);
+}
+
+export async function exportOutletStockToExcel(outletName: string, products: Product[]) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Senopati Coffee";
+  workbook.created = new Date();
+
+  const worksheet = workbook.addWorksheet(`Stok - ${outletName}`);
+
+  const totalColumns = 5;
+  const headers = ["No", "Nama Produk", "Kategori", "Stok", "Satuan"];
+
+  addTitleBlock(worksheet, `Stok Outlet: ${outletName}`, products.length, totalColumns);
+
+  const headerRowNumber = 4;
+  const headerRow = worksheet.addRow(headers);
+  applyHeaderStyle(headerRow, totalColumns);
+
+  products.forEach((product, index) => {
+    const stock = product.pivot?.stock ?? 0;
+    const rowData = [
+      index + 1,
+      product.name,
+      product.category?.name ?? "-",
+      stock,
+      product.unit ?? "-",
+    ];
+    const dataRow = worksheet.addRow(rowData);
+    const rowIndex = index + 1;
+
+    dataRow.font = { size: 10 };
+    dataRow.alignment = { vertical: "middle" };
+
+    dataRow.getCell(1).alignment = { horizontal: "center", vertical: "middle" };
+    dataRow.getCell(2).alignment = { horizontal: "left", vertical: "middle" };
+    dataRow.getCell(3).alignment = { horizontal: "left", vertical: "middle" };
+    dataRow.getCell(5).alignment = { horizontal: "left", vertical: "middle" };
+
+    const stockCell = dataRow.getCell(4);
+    stockCell.alignment = { horizontal: "right", vertical: "middle" };
+
+    if (stock <= 5) {
+      stockCell.font = { bold: true, size: 10, color: { argb: STOCK_LOW_FONT_COLOR } };
+      for (let colIndex = 1; colIndex <= totalColumns; colIndex++) {
+        dataRow.getCell(colIndex).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: STOCK_HIGHLIGHT_COLOR },
+        };
+      }
+    } else {
+      stockCell.font = { bold: true, size: 10, color: { argb: "1053D5" } };
+      applyZebraStripe(dataRow, rowIndex, totalColumns);
+    }
+
+    dataRow.height = 24;
+  });
+
+  const lastDataRowNumber = headerRowNumber + products.length;
+
+  applyBorderToRange(worksheet, headerRowNumber, lastDataRowNumber, 1, totalColumns);
+  setColumnWidthsBasedOnData(worksheet, headerRowNumber, lastDataRowNumber, totalColumns);
+  setupFreezeAndFilter(worksheet, headerRowNumber, totalColumns);
+
+  const today = getTodayString();
+  const safeName = outletName.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
+  await downloadWorkbook(workbook, `laporan-stok-${safeName}-${today}.xlsx`);
 }

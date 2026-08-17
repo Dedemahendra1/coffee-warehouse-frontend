@@ -37,7 +37,7 @@ const OutletProductList = () => {
             <div className="flex items-center gap-6 h-[92px] bg-white w-full rounded-3xl p-[18px]">
               <div className="flex flex-col gap-[6px] w-full">
                 <h1 className="font-bold text-2xl">Outlet Details</h1>
-                <Link to={`/outlets`}
+                <Link to={isKeeper ? `/my-outlet` : `/outlets`}
                   className="flex items-center gap-[6px] text-monday-gray font-semibold"
                 >
                   <img
@@ -45,7 +45,7 @@ const OutletProductList = () => {
                     className="size-4 flex shrink-0"
                     alt="icon"
                   />
-                  Manage Outlets
+                  {isKeeper ? "My Outlet" : "Manage Outlets"}
                 </Link>
               </div>
               <div className="flex items-center flex-nowrap gap-3">
@@ -117,12 +117,14 @@ const OutletProductList = () => {
                 </p>
                 <p className="font-semibold text-lg">{merchant.keeper.name}</p>
               </div>
-              <Link
-                to={`/outlets/edit/${merchant.id}`}
-                className="btn btn-black w-[160px] font-semibold text-nowrap"
-              >
-                Edit Merchant
-              </Link>
+              {!isKeeper && (
+                <Link
+                  to={`/outlets/edit/${merchant.id}`}
+                  className="btn btn-black w-[160px] font-semibold text-nowrap"
+                >
+                  Edit Merchant
+                </Link>
+              )}
             </section>
             <section
               id="Products"
@@ -147,17 +149,19 @@ const OutletProductList = () => {
                     View and update your Product Warehouses list here.
                   </p>
                 </div>
-                <Link
-                  to={`/outlet-products/${id}/distribusi-stok`}
-                  className="btn btn-primary font-semibold"
-                >
-                  Distribusi Stok
-                  <img
-                    src="/assets/images/icons/add-square-white.svg"
-                    className="flex sixe-6 shrink-0"
-                    alt="icon"
-                  />
-                </Link>
+                {isKeeper && (
+                  <Link
+                    to={`/outlet-products/${merchant.id}/distribusi-stok`}
+                    className="btn btn-primary font-semibold"
+                  >
+                    Distribusi Stok
+                    <img
+                      src="/assets/images/icons/add-square-white.svg"
+                      className="flex sixe-6 shrink-0"
+                      alt="icon"
+                    />
+                  </Link>
+                )}
               </div>
               <hr className="border-monday-border" />
               <div
@@ -222,12 +226,14 @@ const OutletProductList = () => {
                             >
                               Details
                             </button>
-                            <Link
-                      to={`/outlet-products/${id}/edit-distribusi-stok/${product.id}`}
-                              className="btn btn-black min-w-[130px] font-semibold"
-                            >
-                              Transfer Stok
-                            </Link>
+                            {isKeeper && (
+                              <Link
+                                to={`/outlet-products/${merchant.id}/edit-distribusi-stok/${product.id}`}
+                                className="btn btn-black min-w-[130px] font-semibold"
+                              >
+                                Transfer Stok
+                              </Link>
+                            )}
                           </div>
                         </div>
                         <hr className="border-monday-border last:hidden" />

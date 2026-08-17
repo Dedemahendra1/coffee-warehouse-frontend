@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import UserProfileCard from "../components/UserProfileCard";
 import { useReportsData, Tab } from "./reports/useReportsData";
-import { exportLowStockToExcel, exportDistributionToExcel } from "./reports/exportExcel";
+import { exportLowStockToExcel, exportDistributionToExcel, exportStockOutToExcel, exportOutletStockToExcel } from "./reports/exportExcel";
 import LowStockTab from "./reports/LowStockTab";
 import DistributionTab from "./reports/DistributionTab";
+import StockOutTab from "./reports/StockOutTab";
 
 const ROWS_PER_PAGE = 10;
 
@@ -14,6 +15,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "gudang", label: "Stok Gudang" },
   { key: "outlet", label: "Stok Outlet" },
   { key: "distribusi", label: "Riwayat Distribusi" },
+  { key: "stock-out", label: "Riwayat Stock Out" },
 ];
 
 const Reports = () => {
@@ -26,6 +28,8 @@ const Reports = () => {
   const [filterWarehouse, setFilterWarehouse] = useState("");
   const [filterOutlet, setFilterOutlet] = useState("");
 
+  const [selectedOutletId, setSelectedOutletId] = useState<number | null>(null);
+
   const {
     warehouseList,
     outletList,
@@ -36,8 +40,10 @@ const Reports = () => {
     allLowStockProducts,
     filteredLowStock,
     filteredDistribution,
+    filteredStockOut,
     paginatedLowStock,
     paginatedDistribution,
+    paginatedStockOut,
     uniqueWarehouseNames,
     uniqueOutletNames,
   } = useReportsData({
@@ -50,8 +56,45 @@ const Reports = () => {
     rowsPerPage: ROWS_PER_PAGE,
   });
 
+  const selectedOutlet = useMemo(
+    () => outletList.find((o) => o.id === selectedOutletId) ?? null,
+    [outletList, selectedOutletId]
+  );
+
+  const selectedOutletProducts = useMemo(() => {
+    if (!selectedOutlet) return [];
+    let products = selectedOutlet.products ?? [];
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      products = products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.category?.name?.toLowerCase().includes(query)
+      );
+    }
+    return products;
+  }, [selectedOutlet, searchQuery]);
+
+  const selectedOutletTotalStock = useMemo(
+    () => (selectedOutlet?.products ?? []).reduce((sum, p) => sum + (p.pivot?.stock ?? 0), 0),
+    [selectedOutlet]
+  );
+
+  const outletPageStart = (currentPage - 1) * ROWS_PER_PAGE;
+  const outletPaginatedProducts = selectedOutletProducts.slice(outletPageStart, outletPageStart + ROWS_PER_PAGE);
+
+  // Auto-select first outlet when switching to outlet tab
+  useEffect(() => {
+    if (activeTab === "outlet" && outletList.length > 0 && (selectedOutletId === null || !outletList.find(o => o.id === selectedOutletId))) {
+      setSelectedOutletId(outletList[0].id);
+    }
+  }, [activeTab, outletList, selectedOutletId]);
+
   const totalItems =
-    activeTab === "distribusi" ? filteredDistribution.length : filteredLowStock.length;
+    activeTab === "distribusi" ? filteredDistribution.length
+    : activeTab === "stock-out" ? filteredStockOut.length
+    : activeTab === "outlet" ? selectedOutletProducts.length
+    : filteredLowStock.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ROWS_PER_PAGE));
 
   useEffect(() => {
@@ -74,6 +117,10 @@ const Reports = () => {
   const handleDownloadExcel = async () => {
     if (activeTab === "distribusi") {
       await exportDistributionToExcel(filteredDistribution);
+    } else if (activeTab === "stock-out") {
+      await exportStockOutToExcel(filteredStockOut);
+    } else if (activeTab === "outlet" && selectedOutlet) {
+      await exportOutletStockToExcel(selectedOutlet.name, selectedOutletProducts);
     } else {
       await exportLowStockToExcel(
         filteredLowStock,
@@ -84,7 +131,7 @@ const Reports = () => {
     }
   };
 
-  const showTableToolbar = activeTab === "distribusi" || activeTab === "stok-habis";
+  const showTableToolbar = activeTab === "distribusi" || activeTab === "stock-out" || activeTab === "stok-habis" || activeTab === "outlet";
   const hasActiveFilters = !!(
     searchQuery || filterDateFrom || filterDateTo || filterWarehouse || filterOutlet
   );
@@ -382,6 +429,32 @@ const Reports = () => {
                         </select>
                       </div>
                     )}
+                    {activeTab === "stock-out" && (
+                      <div className="reports-filter-row">
+                        <input type="date" value={filterDateFrom} onChange={(e) => { setFilterDateFrom(e.target.value); setCurrentPage(1); }} className="reports-filter-input" />
+                        <span style={{ color: '#9ca3af', fontSize: 14 }}>—</span>
+                        <input type="date" value={filterDateTo} onChange={(e) => { setFilterDateTo(e.target.value); setCurrentPage(1); }} className="reports-filter-input" />
+                        <select value={filterOutlet} onChange={(e) => { setFilterOutlet(e.target.value); setCurrentPage(1); }} className="reports-filter-select">
+                          <option value="">Semua Outlet</option>
+                          {uniqueOutletNames.map((on) => (<option key={on} value={on}>{on}</option>))}
+                        </select>
+                      </div>
+                    )}
+                    {activeTab === "outlet" && (
+                      <div className="reports-filter-row">
+                        <label style={{ fontWeight: 600, fontSize: 14, color: '#374151', whiteSpace: 'nowrap' }}>Outlet:</label>
+                        <select
+                          value={selectedOutletId ?? ""}
+                          onChange={(e) => { setSelectedOutletId(Number(e.target.value)); setCurrentPage(1); setSearchQuery(""); }}
+                          className="reports-filter-select"
+                          style={{ minWidth: 240 }}
+                        >
+                          {outletList.map((outlet) => (
+                            <option key={outlet.id} value={outlet.id}>{outlet.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     {hasActiveFilters && (
                       <button onClick={resetFilters} className="reports-reset-btn">Reset Filter</button>
                     )}
@@ -445,44 +518,39 @@ const Reports = () => {
 
                 {activeTab === "outlet" && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {outletList.length > 0 ? (
-                      outletList.map((outlet) => {
-                        const ot = outlet.products?.reduce((s, p) => s + (p.pivot?.stock ?? 0), 0) ?? 0;
-                        return (
-                          <div key={outlet.id} className="reports-wh-card">
-                            <div className="reports-wh-head">
-                              <div className="reports-wh-left">
-                                <div className="reports-wh-icon"><img src={outlet.photo} alt="" /></div>
-                                <div className="flex flex-col">
-                                  <p className="reports-wh-name">{outlet.name}</p>
-                                  <p className="reports-wh-phone">{outlet.keeper?.name ?? "No Keeper"}</p>
-                                </div>
-                              </div>
-                              <div className="reports-wh-right">
-                                <div className="reports-badge">
-                                  <img src="/assets/images/icons/box-black.svg" alt="" />
-                                  <span className="reports-badge-num">{ot}</span>
-                                  <span className="reports-badge-label">stok</span>
-                                </div>
-                                <Link to={`/outlet-products/${outlet.id}`} className="reports-link">Detail</Link>
-                              </div>
+                    {selectedOutlet ? (
+                      <div className="reports-wh-card">
+                        <div className="reports-wh-head">
+                          <div className="reports-wh-left">
+                            <div className="reports-wh-icon"><img src={selectedOutlet.photo} alt="" /></div>
+                            <div className="flex flex-col">
+                              <p className="reports-wh-name">{selectedOutlet.name}</p>
+                              <p className="reports-wh-phone">{selectedOutlet.keeper?.name ?? "No Keeper"}</p>
                             </div>
-                            {outlet.products && outlet.products.length > 0 ? (
-                              <div className="reports-prod-list">
-                                {outlet.products.map((op, idx) => (
-                                  <div key={op.id} className={`reports-prod-row ${idx < outlet.products.length - 1 ? "reports-prod-row-border" : ""}`}>
-                                    <div className="reports-prod-thumb"><img src={op.thumbnail} alt="" /></div>
-                                    <p className="reports-prod-name">{op.name}</p>
-                                    <p className="reports-prod-cat">{op.category?.name}</p>
-                                    <p className={`reports-prod-stock ${(op.pivot?.stock ?? 0) <= 5 ? "reports-prod-danger" : "reports-prod-normal"}`}>{op.pivot?.stock ?? 0} {op.unit}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : <p className="reports-no-prod">Belum ada produk</p>}
                           </div>
-                        );
-                      })
-                    ) : renderEmptyState("Belum ada data outlet.")}
+                          <div className="reports-wh-right">
+                            <div className="reports-badge">
+                              <img src="/assets/images/icons/box-black.svg" alt="" />
+                              <span className="reports-badge-num">{selectedOutletTotalStock}</span>
+                              <span className="reports-badge-label">stok</span>
+                            </div>
+                            <Link to={`/outlet-products/${selectedOutlet.id}`} className="reports-link">Detail</Link>
+                          </div>
+                        </div>
+                        {outletPaginatedProducts.length > 0 ? (
+                          <div className="reports-prod-list">
+                            {outletPaginatedProducts.map((op, idx) => (
+                              <div key={op.id} className={`reports-prod-row ${idx < outletPaginatedProducts.length - 1 ? "reports-prod-row-border" : ""}`}>
+                                <div className="reports-prod-thumb"><img src={op.thumbnail} alt="" /></div>
+                                <p className="reports-prod-name">{op.name}</p>
+                                <p className="reports-prod-cat">{op.category?.name}</p>
+                                <p className={`reports-prod-stock ${(op.pivot?.stock ?? 0) <= 5 ? "reports-prod-danger" : "reports-prod-normal"}`}>{op.pivot?.stock ?? 0} {op.unit}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : <p className="reports-no-prod">{hasActiveFilters ? "Tidak ada produk yang sesuai filter." : "Belum ada produk"}</p>}
+                      </div>
+                    ) : renderEmptyState("Tidak ada data outlet.")}
                   </div>
                 )}
 
@@ -490,6 +558,17 @@ const Reports = () => {
                   <DistributionTab
                     paginatedRows={paginatedDistribution}
                     filteredCount={filteredDistribution.length}
+                    hasActiveFilters={hasActiveFilters}
+                    searchQuery={searchQuery}
+                    renderPagination={renderPagination}
+                    renderEmptyState={renderEmptyState}
+                  />
+                )}
+
+                {activeTab === "stock-out" && (
+                  <StockOutTab
+                    paginatedRows={paginatedStockOut}
+                    filteredCount={filteredStockOut.length}
                     hasActiveFilters={hasActiveFilters}
                     searchQuery={searchQuery}
                     renderPagination={renderPagination}
