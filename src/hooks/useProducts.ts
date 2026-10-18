@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 import apiClient from "../api/axiosConfig";
 import { AxiosError } from "axios";
 import {
@@ -24,7 +24,10 @@ export const useFetchProducts = () => {
 // ===============================
 // Fetch Single Product
 // ===============================
-export const useFetchProduct = (id: number) => {
+export const useFetchProduct = (
+  id: number,
+  options?: Partial<UseQueryOptions<Product, AxiosError>>
+) => {
   return useQuery<Product, AxiosError>({
     queryKey: ["product", id],
     queryFn: async () => {
@@ -32,6 +35,7 @@ export const useFetchProduct = (id: number) => {
       return response.data;
     },
     enabled: !!id,
+    ...options,
   });
 };
 

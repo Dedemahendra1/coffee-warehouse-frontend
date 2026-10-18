@@ -22,6 +22,9 @@ export interface Role {
     roles?: string[];
     token?: string;
     outlet: import("./outlet").Outlet;
+    merchant_id?: number | null;
+    merchant?: import("./outlet").Outlet | null;
+    assigned_merchant?: import("./outlet").Outlet | null;
   }
 
   export interface CreateUserPayload {
@@ -31,4 +34,6 @@ export interface Role {
     password: string;
     password_confirmation: string;
     photo: File;
+    role?: string;
+    merchant_id?: number | null;
   } 

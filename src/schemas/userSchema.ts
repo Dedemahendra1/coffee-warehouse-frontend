@@ -15,10 +15,16 @@ export const userSchema = z
       .refine((file) => file.size <= 2 * 1024 * 1024, {
         message: "Image size must be under 2MB.",
       }),
+    role: z.string().optional(),
+    merchant_id: z.coerce.number().optional(),
   })
   .refine((data) => !data.password || data.password === data.password_confirmation, {
     message: "Passwords must match.",
     path: ["password_confirmation"],
+  })
+  .refine((data) => data.role !== "kasir" || !!data.merchant_id, {
+    message: "Outlet wajib dipilih untuk role kasir.",
+    path: ["merchant_id"],
   });
  
 

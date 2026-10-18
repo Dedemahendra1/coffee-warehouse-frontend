@@ -19,6 +19,11 @@ const AssignUserRole = () => {
   const [userId, setUserId] = useState("");
   const [roleId, setRoleId] = useState("");
 
+  const assignErrorMessage = error?.response?.data
+    ? Object.values(error.response.data.errors ?? {})[0]?.[0] ??
+      error.response.data.message
+    : error?.message;
+
   const handleAssignRole = () => {
     if (!userId || !roleId) return;
     assignRole({ user_id: Number(userId), role_id: Number(roleId) });
@@ -88,7 +93,9 @@ const AssignUserRole = () => {
                 Complete the form
               </h2>
 
-              {error && <p className="text-red-500">{error.message}</p>}
+              {assignErrorMessage && (
+                <p className="text-red-500">{assignErrorMessage}</p>
+              )}
 
               <label className="group relative rounded-3xl border-[1.5px] border-monday-border focus-within:border-monday-black transition-300 overflow-hidden">
                 <div className="flex items-center pr-4 absolute transform -translate-y-1/2 top-1/2 left-6 border-r-[1.5px] border-monday-border ">

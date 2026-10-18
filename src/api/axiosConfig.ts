@@ -1,10 +1,9 @@
 import axios from "axios";
 
-const API_BASE_URL =
-  "https://coffee-warehouse-backend-production.up.railway.app";
+
 
 const apiClient = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: "http://localhost:8000/api",
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",

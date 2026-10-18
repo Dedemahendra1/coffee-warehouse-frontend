@@ -5,4 +5,12 @@ import react from '@vitejs/plugin-react-swc'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(),],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://coffee-warehouse-backend-production.up.railway.app',
+        changeOrigin: true,
+      },
+    },
+  },
 })

@@ -12,6 +12,8 @@ export const useRoleRedirect = () => {
         navigate("/overview");
       } else if (user.roles.includes("keeper")) {
         navigate("/overview-outlet");
+      } else if (user.roles.includes("kasir")) {
+        navigate("/stock-outs");
       } else {
         navigate("/unauthorized");
       }

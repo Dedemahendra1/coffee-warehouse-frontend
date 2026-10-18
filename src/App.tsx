@@ -133,8 +133,11 @@ function App() {
           <Route path="/warehouse-products/:warehouseId/edit-assign/:productId" 
             element={<ProtectedRoute roles={['keeper']}><EditWarehouseProduct /></ProtectedRoute>} />
 
-          {/* Stock Out Routes (Manager & Keeper) */}
-          <Route path="/stock-outs" element={<ProtectedRoute roles={['manager', 'keeper']}><StockOutList /></ProtectedRoute>} />
+          {/* Stock Out Routes (Manager, Keeper & Kasir) */}
+          <Route path="/stock-outs" element={<ProtectedRoute roles={['manager', 'keeper', 'kasir']}><StockOutList /></ProtectedRoute>} />
+
+          {/* Stok Outlet (Kasir) */}
+          <Route path="/outlet-products" element={<ProtectedRoute roles={['kasir']}><OutletProductList /></ProtectedRoute>} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

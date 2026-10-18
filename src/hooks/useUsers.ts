@@ -42,6 +42,12 @@ export const useCreateUser = () => {
       formData.append("password", payload.password);
       formData.append("password_confirmation", payload.password_confirmation);
       formData.append("photo", payload.photo);
+      if (payload.role) {
+        formData.append("role", payload.role);
+      }
+      if (payload.merchant_id) {
+        formData.append("merchant_id", payload.merchant_id.toString());
+      }
 
       const response = await apiClient.post("/users", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -79,6 +85,12 @@ export const useUpdateUser = () => {
 
       if (payload.photo) {
         formData.append("photo", payload.photo);
+      }
+      if (payload.role) {
+        formData.append("role", payload.role);
+      }
+      if (payload.merchant_id) {
+        formData.append("merchant_id", payload.merchant_id.toString());
       }
 
       const response = await apiClient.post(`/users/${id}`, formData, {

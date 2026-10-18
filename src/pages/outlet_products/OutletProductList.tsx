@@ -10,17 +10,22 @@ const OutletProductList = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const isKeeper = user?.roles?.includes("keeper");
+  const isKasir = user?.roles?.includes("kasir");
+  const usesMyOutlet = !!isKeeper || !!isKasir;
 
-  const { data: managerOutlet, isPending: loadingManager } = useFetchOutlet(Number(id), { enabled: !isKeeper });
-  const { data: keeperOutlet, isPending: loadingKeeper } = useMyOutletProfile({ enabled: !!isKeeper });
+  const { data: managerOutlet, isPending: loadingManager } = useFetchOutlet(Number(id), { enabled: !usesMyOutlet });
+  const { data: keeperOutlet, isPending: loadingKeeper } = useMyOutletProfile({ enabled: usesMyOutlet });
 
-  const merchant = isKeeper ? keeperOutlet : managerOutlet;
-  const isPending = isKeeper ? loadingKeeper : loadingManager;
+  const merchant = usesMyOutlet ? keeperOutlet : managerOutlet;
+  const isPending = usesMyOutlet ? loadingKeeper : loadingManager;
 
   const [selectedProductId, setSelectedProductId] = useState<number | null>(
     null
   );
-  const { data: selectedProduct } = useFetchProduct(selectedProductId || 0);
+  const { data: fetchedProduct } = useFetchProduct(selectedProductId || 0, { enabled: !isKasir });
+  const selectedProduct = isKasir
+    ? merchant?.products?.find((p) => p.id === selectedProductId)
+    : fetchedProduct;
 
   if (!merchant) return <p> outlet not found...</p>;
   if (isPending) return <p>Loading outlet products...</p>;
@@ -37,16 +42,18 @@ const OutletProductList = () => {
             <div className="flex items-center gap-6 h-[92px] bg-white w-full rounded-3xl p-[18px]">
               <div className="flex flex-col gap-[6px] w-full">
                 <h1 className="font-bold text-2xl">Outlet Details</h1>
-                <Link to={isKeeper ? `/my-outlet` : `/outlets`}
-                  className="flex items-center gap-[6px] text-monday-gray font-semibold"
-                >
-                  <img
-                    src="/assets/images/icons/arrow-left-grey.svg"
-                    className="size-4 flex shrink-0"
-                    alt="icon"
-                  />
-                  {isKeeper ? "My Outlet" : "Manage Outlets"}
-                </Link>
+                {!isKasir && (
+                  <Link to={isKeeper ? `/my-outlet` : `/outlets`}
+                    className="flex items-center gap-[6px] text-monday-gray font-semibold"
+                  >
+                    <img
+                      src="/assets/images/icons/arrow-left-grey.svg"
+                      className="size-4 flex shrink-0"
+                      alt="icon"
+                    />
+                    {isKeeper ? "My Outlet" : "Manage Outlets"}
+                  </Link>
+                )}
               </div>
               <div className="flex items-center flex-nowrap gap-3">
                 <a href="#">
@@ -115,7 +122,7 @@ const OutletProductList = () => {
                   />
                   <span>Keeper Name:</span>
                 </p>
-                <p className="font-semibold text-lg">{merchant.keeper.name}</p>
+                <p className="font-semibold text-lg">{merchant.keeper?.name ?? "-"}</p>
               </div>
               {!isKeeper && (
                 <Link

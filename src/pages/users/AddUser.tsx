@@ -8,9 +8,13 @@ import { ApiErrorResponse } from "../../types/types";
 import UserProfileCard from "../../components/UserProfileCard";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useFetchRoles } from "../../hooks/useRoles";
+import { useFetchOutlets } from "../../hooks/useOutlets";
 
 const AddUser = () => {
   const { mutate: createUser, isPending } = useCreateUser();
+  const { data: roles } = useFetchRoles();
+  const { data: outlets } = useFetchOutlets();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [imagePreview, setImagePreview] = useState(
@@ -23,10 +27,13 @@ const AddUser = () => {
     handleSubmit,
     setError,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
   });
+
+  const selectedRole = watch("role");
 
   const onSubmit = (data: UserFormData) => {
     setError("root", { type: "server", message: "" });
@@ -273,6 +280,48 @@ const AddUser = () => {
                 <p className="text-red-500">
                   {errors.password_confirmation.message}
                 </p>
+              )}
+
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-sm text-monday-gray">
+                  Role (opsional)
+                </label>
+                <select
+                  {...register("role")}
+                  className="h-[52px] rounded-2xl border border-monday-border px-4 font-semibold"
+                >
+                  <option value="">Tanpa role</option>
+                  {(roles ?? []).map((role) => (
+                    <option key={role.name} value={role.name}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.role && (
+                  <p className="text-red-500">{errors.role.message}</p>
+                )}
+              </div>
+
+              {selectedRole === "kasir" && (
+                <div className="flex flex-col gap-2">
+                  <label className="font-semibold text-sm text-monday-gray">
+                    Outlet
+                  </label>
+                  <select
+                    {...register("merchant_id")}
+                    className="h-[52px] rounded-2xl border border-monday-border px-4 font-semibold"
+                  >
+                    <option value="">Pilih Outlet</option>
+                    {(outlets ?? []).map((outlet) => (
+                      <option key={outlet.id} value={outlet.id}>
+                        {outlet.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.merchant_id && (
+                    <p className="text-red-500">{errors.merchant_id.message}</p>
+                  )}
+                </div>
               )}
 
               <div className="flex items-center justify-end gap-4">

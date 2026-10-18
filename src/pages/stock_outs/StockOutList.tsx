@@ -9,8 +9,10 @@ import { useFetchStockOuts, useCreateStockOut } from "../../hooks/useStockOuts";
 const StockOutList = () => {
   const { user } = useAuth();
   const isKeeper = user?.roles?.includes("keeper");
+  const isKasir = user?.roles?.includes("kasir");
+  const isOutletUser = !!isKeeper || !!isKasir;
 
-  const { data: outlet } = useMyOutletProfile({ enabled: !!isKeeper });
+  const { data: outlet } = useMyOutletProfile({ enabled: isOutletUser });
   const { data: stockOuts = [] } = useFetchStockOuts();
 
   const createStockOut = useCreateStockOut();
@@ -19,6 +21,10 @@ const StockOutList = () => {
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [reason, setReason] = useState("");
+
+  const selectedProduct = outlet?.products?.find(
+    (p) => String(p.id) === productId
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,17 +60,19 @@ const StockOutList = () => {
             <div className="flex items-center gap-6 h-[92px] bg-white w-full rounded-3xl p-[18px]">
               <div className="flex flex-col gap-[6px] w-full">
                 <h1 className="font-bold text-2xl">Stock Out</h1>
-                <Link
-                  to={isKeeper ? "/overview-outlet" : "/overview"}
-                  className="flex items-center gap-[6px] text-monday-gray font-semibold"
-                >
-                  <img
-                    src="/assets/images/icons/arrow-left-grey.svg"
-                    className="size-4 flex shrink-0"
-                    alt="icon"
-                  />
-                  Dashboard
-                </Link>
+                {!isKasir && (
+                  <Link
+                    to={isKeeper ? "/overview-outlet" : "/overview"}
+                    className="flex items-center gap-[6px] text-monday-gray font-semibold"
+                  >
+                    <img
+                      src="/assets/images/icons/arrow-left-grey.svg"
+                      className="size-4 flex shrink-0"
+                      alt="icon"
+                    />
+                    Dashboard
+                  </Link>
+                )}
               </div>
               <div className="flex items-center flex-nowrap gap-3">
                 <a href="#">
@@ -108,14 +116,14 @@ const StockOutList = () => {
             >
               <div className="flex size-16 rounded-2xl bg-monday-background items-center justify-center overflow-hidden">
                 <img
-                  src={isKeeper ? outlet?.photo : "/assets/images/icons/box-grey.svg"}
+                  src={isOutletUser ? outlet?.photo : "/assets/images/icons/box-grey.svg"}
                   className="size-full object-contain"
                   alt="icon"
                 />
               </div>
               <div className="flex flex-col gap-2 flex-1">
                 <p className="font-semibold text-xl">
-                  {isKeeper ? outlet?.name : "Senopati Coffee"}
+                  {isOutletUser ? outlet?.name : "Senopati Coffee"}
                 </p>
                 <p className="flex items-center gap-1 font-medium text-lg text-monday-gray">
                   <img
@@ -124,13 +132,13 @@ const StockOutList = () => {
                     alt="icon"
                   />
                   <span>
-                    {isKeeper
+                    {isOutletUser
                       ? "Barang keluar / hilang dari stok outlet Anda"
                       : "Monitoring barang keluar seluruh outlet"}
                   </span>
                 </p>
               </div>
-              {isKeeper && (
+              {isOutletUser && (
                 <button
                   onClick={() => setShowModal(true)}
                   className="btn btn-primary font-semibold"
@@ -216,7 +224,7 @@ const StockOutList = () => {
                               {new Date(so.created_at).toLocaleDateString("id-ID")}
                             </p>
                           </div>
-                          {!isKeeper && (
+                          {!isOutletUser && (
                             <div className="flex items-center gap-[6px] w-[220px] shrink-0">
                               <img
                                 src="/assets/images/icons/shop-black.svg"
@@ -254,16 +262,22 @@ const StockOutList = () => {
         </div>
       </div>
 
-      {isKeeper && showModal && outlet && (
-        <div className="modal flex flex-1 items-center justify-center h-full fixed top-0 w-full">
+      {isOutletUser && showModal && outlet && (
+        <div className="modal flex flex-1 items-center justify-center h-full fixed top-0 w-full py-10">
           <div
             onClick={() => setShowModal(false)}
             className="absolute w-full h-full bg-[#292D32B2] cursor-pointer"
           />
-          <div className="relative flex flex-col w-[406px] shrink-0 rounded-3xl p-[18px] gap-5 bg-white">
+          <div className="relative flex flex-col w-[430px] shrink-0 rounded-3xl p-[18px] gap-5 bg-white">
             <div className="modal-header flex items-center justify-between">
-              <p className="font-semibold text-xl">Tambah Stock Out</p>
+              <div className="flex flex-col gap-1">
+                <p className="font-semibold text-xl">Tambah Stock Out</p>
+                <p className="font-medium text-sm text-monday-gray">
+                  {outlet.name}
+                </p>
+              </div>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className="flex size-14 rounded-full items-center justify-center bg-monday-gray-background"
               >
@@ -282,7 +296,7 @@ const StockOutList = () => {
                 <select
                   value={productId}
                   onChange={(e) => setProductId(e.target.value)}
-                  className="h-[52px] rounded-2xl border border-monday-border px-4"
+                  className="w-full h-[52px] rounded-2xl border-[1.5px] border-monday-border bg-white px-4 font-semibold text-lg focus:border-monday-black transition-300"
                   required
                 >
                   <option value="">Pilih Produk</option>
@@ -293,39 +307,93 @@ const StockOutList = () => {
                   ))}
                 </select>
               </div>
+
               <div className="flex flex-col gap-2">
-                <label className="font-semibold text-sm text-monday-gray">
-                  Kuantitas
+                <label className="group relative">
+                  <div className="flex items-center pr-4 absolute transform -translate-y-1/2 top-1/2 left-6 border-r-[1.5px] border-monday-border">
+                    <img
+                      src="/assets/images/icons/strongbox-grey.svg"
+                      className="flex size-6 shrink-0"
+                      alt="icon"
+                    />
+                  </div>
+                  <p className="placeholder font-medium text-monday-gray text-sm absolute -translate-y-1/2 left-[81px] top-[25px] group-has-[:placeholder-shown]:top-[36px] group-focus-within:top-[25px] transition-300">
+                    Kuantitas
+                  </p>
+                  <input
+                    type="number"
+                    min={1}
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    className="appearance-none w-full h-[72px] font-semibold text-lg rounded-3xl border-[1.5px] border-monday-border pl-20 pr-6 pb-[14.5px] pt-[34.5px] placeholder-shown:pt-[14.5px] focus:border-monday-black transition-300"
+                    placeholder=""
+                    required
+                  />
                 </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="Masukkan jumlah barang keluar"
-                  className="h-[52px] rounded-2xl border border-monday-border px-4"
-                  required
-                />
+                {selectedProduct && (
+                  <p className="font-medium text-sm text-monday-gray">
+                    Stok tersedia: {selectedProduct.pivot?.stock ?? 0}{" "}
+                    {selectedProduct.unit}
+                  </p>
+                )}
               </div>
+
               <div className="flex flex-col gap-2">
-                <label className="font-semibold text-sm text-monday-gray">
-                  Alasan (opsional)
+                <label className="group relative">
+                  <div className="flex items-center pr-4 absolute transform -translate-y-1/2 top-1/2 left-6 border-r-[1.5px] border-monday-border">
+                    <img
+                      src="/assets/images/icons/note-2-grey.svg"
+                      className="flex size-6 shrink-0"
+                      alt="icon"
+                    />
+                  </div>
+                  <p className="placeholder font-medium text-monday-gray text-sm absolute -translate-y-1/2 left-[81px] top-[25px] group-has-[:placeholder-shown]:top-[36px] group-focus-within:top-[25px] transition-300">
+                    Alasan (opsional)
+                  </p>
+                  <input
+                    type="text"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    className="appearance-none w-full h-[72px] font-semibold text-lg rounded-3xl border-[1.5px] border-monday-border pl-20 pr-6 pb-[14.5px] pt-[34.5px] placeholder-shown:pt-[14.5px] focus:border-monday-black transition-300"
+                    placeholder=""
+                  />
                 </label>
-                <input
-                  type="text"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="cth: Barang rusak, stok kadaluarsa"
-                  className="h-[52px] rounded-2xl border border-monday-border px-4"
-                />
+                {isKasir && (
+                  <div className="flex flex-wrap gap-2">
+                    {["Terjual", "Barang rusak", "Stok kadaluarsa", "Kemasan bocor"].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setReason(preset)}
+                        className={`rounded-full border px-3 py-1 text-sm font-medium transition-300 ${
+                          reason === preset
+                            ? "border-monday-blue bg-monday-blue/10 text-monday-blue"
+                            : "border-monday-border text-monday-gray"
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <button
-                type="submit"
-                disabled={createStockOut.isPending}
-                className="btn btn-primary font-semibold justify-center"
-              >
-                {createStockOut.isPending ? "Menyimpan..." : "Simpan Stock Out"}
-              </button>
+
+              <div className="flex items-center justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="btn btn-red font-semibold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={createStockOut.isPending}
+                  className="btn btn-primary font-semibold"
+                >
+                  {createStockOut.isPending ? "Menyimpan..." : "Simpan Stock Out"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
