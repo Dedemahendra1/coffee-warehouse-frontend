@@ -221,7 +221,7 @@ const AddCategory = () => {
               </div>
             </form>
             <div className="flex flex-col w-[392px] shrink-0 h-fit rounded-3xl p-[18px] gap-3 bg-white">
-              <p className="font-semibold">Quick Guide to Add New Category</p>
+              <p className="font-semibold">Panduan Menambah Kategori Baru</p>
               <ul className="flex flex-col gap-4">
                 <li className="flex gap-[6px]">
                   <img
@@ -230,7 +230,7 @@ const AddCategory = () => {
                     alt="icon"
                   />
                   <p className="font-medium leading-[140%]">
-                    Ensure the Category Name is Relevant and Clear Lorem Ipsum
+                    Isi Nama Kategori dengan jelas dan relevan.
                   </p>
                 </li>
                 <li className="flex gap-[6px]">
@@ -240,7 +240,7 @@ const AddCategory = () => {
                     alt="icon"
                   />
                   <p className="font-medium leading-[140%]">
-                    Verify the Image is Appropriate and High-Quality Lorem Ipsum
+                    Unggah foto kategori dengan resolusi dan ukuran yang sesuai.
                   </p>
                 </li>
                 <li className="flex gap-[6px]">
@@ -250,7 +250,7 @@ const AddCategory = () => {
                     alt="icon"
                   />
                   <p className="font-medium leading-[140%]">
-                    Choose a User-Friendly and Clear Tagline Lorem Ipsum simply
+                    Tambahkan Tagline yang singkat dan mudah dipahami.
                   </p>
                 </li>
                 <li className="flex gap-[6px]">
@@ -260,7 +260,7 @@ const AddCategory = () => {
                     alt="icon"
                   />
                   <p className="font-medium leading-[140%]">
-                    Check for Duplicates to Avoid Lorem Redundancy Lorem Ipsum
+                    Periksa apakah kategori sudah ada untuk menghindari duplikasi.
                   </p>
                 </li>
                 <li className="flex gap-[6px]">
@@ -270,7 +270,7 @@ const AddCategory = () => {
                     alt="icon"
                   />
                   <p className="font-medium leading-[140%]">
-                    Preview the Category Carefully
+                    Tinjau kembali data sebelum menyimpan kategori baru.
                   </p>
                 </li>
               </ul>
