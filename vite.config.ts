@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://coffee-warehouse-backend-production.up.railway.app',
+        target: 'https://coffee-warehouse-backend-production-2a08.up.railway.app',
         changeOrigin: true,
       },
     },
