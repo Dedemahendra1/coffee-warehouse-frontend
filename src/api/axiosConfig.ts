@@ -3,12 +3,13 @@ import axios from "axios";
 
 
 const apiClient = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: "https://coffee-warehouse-backend-production-2a08.up.railway.app/api",
   headers: {
     Accept: "application/json",
-    "Content-Type": "application/json",
   },
 });
+
+// coffee-warehouse-backend.railway.internal ini diambil dari railway perbaiki base url
 
 apiClient.interceptors.request.use(async (config) => {
   const token = localStorage.getItem("auth_token");
